@@ -14,7 +14,8 @@ _WP_Editors::wp_link_dialog();
 /**
  * Get the row snippet
  * @param { String } $accs : access control conditions in a readable format
- * @param { Int } $i : loop index
+ * @param { String } $path : the resource path you want to sign
+ * @param { Boolean } $signed : if this row a signed resource
  * @param { Boolean } withoutWrapper : Including the outer div or not
  * @returns { String } HTML 
  */
@@ -54,6 +55,7 @@ function get_snippet($accs = '', $path = '', $signed = false, $withoutWrapper = 
 }
 ;?>
 
+<!-- Menu page wrapper -->
 <div class="wrap">
 
     <!-- Access Control Modal -->
@@ -70,11 +72,13 @@ function get_snippet($accs = '', $path = '', $signed = false, $withoutWrapper = 
     <!-- form -->
     <form id="lit-form" method="POST" action="options.php">
 
+        <!-- ===== REQUIRED PHP SETTINGS FOR THE ADMIN MENU -->
         <?php
             settings_fields( LIT_MENU_GROUP ); // settings group name
             do_settings_sections( LIT_MENU_SLUG ); // just a page slug
             $settings = json_decode(base64_decode(get_option( 'lit-settings' )));
         ;?>
+        <!-- ===== ...REQUIRED PHP SETTINGS FOR THE ADMIN MENU -->
 
         <!-- table -->
         <div class="lit-table">
@@ -88,9 +92,9 @@ function get_snippet($accs = '', $path = '', $signed = false, $withoutWrapper = 
                         <div class="lit-table-col">#</div>
                         <div class="lit-table-col">Access Control Conditions</div>
                         <div class="lit-table-col">Path</div>
-                    </div>
+                    </div><!-- ...header -->
 
-                    <!-- rows -->
+                    <!-- ===== FOR LOOP CONTENT BEGINS ===== -->
                     <?php
                     if(count($settings) > 0){
                         foreach($settings as $i=>$setting){
@@ -98,12 +102,13 @@ function get_snippet($accs = '', $path = '', $signed = false, $withoutWrapper = 
                         }
                     }
                     ;?>
+                    <!-- ===== ...FOR LOOP CONTENT ENDS ===== -->
                 </div>
 
-                <!-- Control -->
+                <!-- control -->
                 <div class="lit-controls">
                     <div id="btn-lit-add-row" class="lit-btn-primary">Add Row</div>
-                </div>
+                </div><!-- ...control -->
             </div><!-- ... left -->
             
             <!-- right -->
@@ -119,7 +124,7 @@ function get_snippet($accs = '', $path = '', $signed = false, $withoutWrapper = 
 
         </div><!-- ...table -->
     </form><!-- ...form -->
-</div>
+</div><!-- ...menu page wrapper -->
 
 <!-- 
 // ================================================================================
