@@ -125,7 +125,6 @@ add_action('wp_footer', function ($callback){
 // =================================================================================
     
     $settings = json_decode(base64_decode(get_option('lit-settings')));
-    $data = get_fields( 'options' )['lit_gated_content'];
 
     // ================================================================================
     // +                        No Acccess Control Pages Setup                        +
