@@ -171,13 +171,13 @@ add_action('wp_footer', function ($callback){
     // +                                   All Pages                                   +
     // =================================================================================
     
-    // -- New 
+    // -- Locked list
     $locked_list = array_map(function($data){
         return $data->anchor;
     }, $settings);
-    console("New List", $locked_list);
+    console("List", $locked_list);
 
-    // -- find current object
+    // -- Find the correct entry on the list
     $found_entry = null;
     for($i = 0; $i < count($settings); $i++){
         $data = $settings[$i];
@@ -185,7 +185,7 @@ add_action('wp_footer', function ($callback){
             $found_entry = $data;
         }
     }
-    console('New Found Match', $found_entry);
+    console("Found Match", $found_entry);
 
 
     // ==================================================================================
