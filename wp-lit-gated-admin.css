@@ -90,6 +90,7 @@
 }
 .lit-table-col__path .lit-btn-select-link{
     margin: auto;
+    text-align: left;
 }
 .lit-table-header .lit-table-col{
     margin-top: 2px;
