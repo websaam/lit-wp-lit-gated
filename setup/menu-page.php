@@ -1,13 +1,11 @@
 <?php
 
 /** 
- * ===== Required Wordpress Methods =====
+ * Require the core editor class so we can call wp_link_dialog function to print the HTML.
+ * Luckly it is public static method ;)
  */
 wp_enqueue_script('wplink');
 wp_enqueue_style( 'editor-buttons' );
-
-// Require the core editor class so we can call wp_link_dialog function to print the HTML.
-// Luckly it is public static method ;)
 require_once ABSPATH . "wp-includes/class-wp-editor.php";
 _WP_Editors::wp_link_dialog(); 
 
