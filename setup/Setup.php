@@ -6,11 +6,34 @@
 class SetupMenu{
 
     /**
-     * Constructor
-     * @returns { void } 
+     * Properties
      */
-    function __construct(){
+    public $menu_name;
+    public $menu_slug;
+    public $menu_icon;
+    public $menu_order;
+    public $menu_page;
+    public $option_name;
+    public $settings_id;
+    public $settings_group;
+
+    /**
+     * Constructor
+     * @param { Array } options
+     * @return { void } 
+     */
+    function __construct($options){
         add_action('admin_menu', [$this, 'register_menu']);
+        add_action('admin_init', [$this, 'register_settings']);
+
+        $this->option_name = $options['option_name'];
+        $this->settings_id = $options['settings_id'];
+        $this->menu_name = $options['menu_name'];
+        $this->menu_slug = $options['menu_slug'];
+        $this->menu_icon = $options['menu_icon'];
+        $this->menu_order = $options['menu_order'];
+        $this->menu_page = $options['menu_page'];
+        $this->settings_group = $options['settings_group'];
     }
 
     /** ----- MENU ----- */
@@ -20,13 +43,13 @@ class SetupMenu{
      */
     function register_menu(){
         add_menu_page(
-            LIT_MENU_NAME, // page <title>Title</title>
-            LIT_MENU_NAME, // menu link text
+            $this->menu_name, // page <title>Title</title>
+            $this->menu_name, // menu link text
             'manage_options', // capability to access the page
-            LIT_MENU_SLUG, // page URL slug
+            $this->menu_slug, // page URL slug
             [$this, 'content'], // callback function /w content
-            LIT_ICON, // menu icon
-            999 // priority
+            $this->menu_icon, // menu icon
+            $this->menu_order // priority
         );
     }
 
@@ -35,7 +58,7 @@ class SetupMenu{
      * @returns { void }
      */
     function content(){
-        include_once(LIT_MENU_PAGE_CONTENT);
+        include_once($this->menu_page);
     }
     
     /** ----- MENU ----- */
@@ -43,47 +66,45 @@ class SetupMenu{
      * Register settings
      */
     function register_settings(){
+    
+        register_setting(
+            $this->settings_group, // settings group name
+            $this->option_name, // option name
+            'sanitize_text_field' // sanitization function
+        );
+    
+        add_settings_section(
+            $this->settings_id, // section ID
+            '', // title (if needed)
+            '', // callback function (if needed)
+            $this->menu_slug // page slug
+        );
+    
+        add_settings_field(
+            $this->option_name,
+            'Lit Settings',
+            [$this, 'field_html'], // function which prints the field
+            $this->menu_slug, // page slug
+            $this->settings_id // section ID
+        );
+    }
 
+    /**
+     * Settings HTML
+     */
+    function field_html(){
+        $text = get_option( $this->option_name );
+        echo '<input type="text" id="'.$this->option_name.'" name="'.$this->option_name.'" value="'.esc_attr( $text ).'" />';
     }
 }
 
-new SetupMenu();
-
-add_action( 'admin_init',  'register_settings' );
-
-function register_settings(){
-
-    $settings_id = 1;
-    $option_name = 'lit-settings';
-
-	register_setting(
-		LIT_MENU_GROUP, // settings group name
-		$option_name, // option name
-		'sanitize_text_field' // sanitization function
-	);
-
-	add_settings_section(
-		$settings_id, // section ID
-		'', // title (if needed)
-		'', // callback function (if needed)
-		LIT_MENU_SLUG // page slug
-	);
-
-	add_settings_field(
-		$option_name,
-		'Lit Settings',
-		'lit_text_field_html', // function which prints the field
-		LIT_MENU_SLUG, // page slug
-		$settings_id // section ID
-	);
-
-}
-
-function lit_text_field_html(){
-
-    $option_name = 'lit-settings';
-	$text = get_option( $option_name );
-
-    echo '<input type="text" id="'.$option_name.'" name="'.$option_name.'" value="'.esc_attr( $text ).'" />';
-
-}
+new SetupMenu([
+    "menu_name" => LIT_MENU_NAME,
+    "menu_slug" => LIT_MENU_SLUG,
+    "menu_icon" => LIT_ICON,
+    "menu_order" => 999,
+    "menu_page" => LIT_MENU_PAGE_CONTENT,
+    "settings_group" => LIT_MENU_GROUP,
+    "option_name" => 'lit-settings',
+    "settings_id" => 1
+]);

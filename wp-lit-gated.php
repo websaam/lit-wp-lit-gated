@@ -244,9 +244,9 @@ add_action('wp_footer', function ($callback){
         
     }
     
-    // ================================================================================
-    // + WARNING! Following Javascript is rendered client-side, which means is public.+
-    // ================================================================================
+    // =================================================================================
+    // + WARNING! Following Javascript is rendered client-side, which means is public. +
+    // =================================================================================
     echo '<script src="'.LIT_VERIFY_JS.'"></script>';
     echo '<script>
         LitJsSdk.litJsSdkLoadedInALIT();
@@ -263,7 +263,6 @@ add_action('wp_footer', function ($callback){
             console.log(resourceId);
             const readable = await LitJsSdk.humanizeAccessControlConditions({accessControlConditions});
             document.getElementById("lit-msg").innerHTML = readable;
-
 
             btnSubmit.addEventListener("click", async (e) => {
                 e.preventDefault();
