@@ -150,6 +150,13 @@ const sanitise = str => (str.endsWith('/') ? str.slice(0, -1) : str)
     .replaceAll('https://', '')
     .replaceAll('http://', '');
 
+//
+// Remove trailing slash
+//
+const removeTrailingSlash = (str) => {
+    return (str.endsWith('/') ? str.slice(0, -1) : str);
+}
+
 // -------------------- Access Control Conditions Modal -------------------- //
 
 // 
@@ -193,9 +200,24 @@ const isAnchor = (str) => {
     return href_regex.exec(str) != null;
 }
 
-const getHref = (str) => {
-    const isAnchorTag = isAnchor(str);
-    return isAnchorTag ? str.split('"')[1] : str;
+//
+// Get href inside <a> tag or just the href src
+// @param { String } str
+// @returns { String } href
+//
+const getHref = (str) => isAnchor(str) ? str.split('"')[1] : str;
+
+//
+// Split URL into parts as resources
+// @param { String } url
+// @returns { base_url, path }
+const getURLParts = (url) => {
+    const data = url.split('/');
+    const base_url = data[2];
+    const splitter = url.split('/')[3];
+    const path = '/' + removeTrailingSlash(splitter + url.split(splitter)[1]);
+
+    return { base_url, path };
 }
 
 //
@@ -214,15 +236,11 @@ const compressedData = () => {
         console.log(`(${i}) -----`);
         const input = inputs[i];
         const anchor_tag = paths[i];
-
-        const href = getHref(anchor_tag.value);
         
-        const data = href.split('/');
-        const base_url = data[2];
-        const path = '/' + data[3];
+        const href = getHref(anchor_tag.value);
+        const { base_url, path } = getURLParts(href);
         const signed = rows[i].classList.contains('signed');
         
-        // console.log(`IsAnchorTag: ${isAnchorTag} : ${anchor_tag.value}`);
         console.log("🔥 anchor:", href);
         console.log("🔥 base_url:", base_url);
         console.log("🔥 path:", path);
@@ -462,12 +480,11 @@ const handleSignBtns = () => {
 
         const accessControlConditions = JSON.parse(accs_textarea.value);
 
-        const data = getHref(link_textarea.value).split('/');
-        const baseUrl = data[2];
-        const path = '/' + data[3];
+        const href = getHref(link_textarea.value);
+        const { base_url, path } = getURLParts(href);
 
         const resourceId = {
-            baseUrl,
+            baseUrl: base_url,
             path,
             orgId: "",
             role: "",
@@ -481,9 +498,6 @@ const handleSignBtns = () => {
             chain, 
             authSig, 
         });
-
-        console.log("Resource: ", resourceId);
-        console.log("sign: ", sign);
 
         if(! sign ){
             alert("Something went wrong when signing this resource.");

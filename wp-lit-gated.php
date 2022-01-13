@@ -42,24 +42,19 @@ include(DIR_URL . "/setup/Setup.php");
 // ================================================================================
 // --- Load scripts in the admin panel on our specific option page to use the access control conditions modal
 function lit_enqueue_acc_modal_css($hook) {
-    // echo '<script>alert("'.$hook.'");</script>';
-    if( $hook != LIT_ADMIN_HOOK )
-    return;
+    if( $hook != LIT_ADMIN_HOOK ) return;
     wp_enqueue_style('lit-modal-css', LIT_ACC_MODAL_CSS);
 }
 function lit_enqueue_acc_modal_js($hook) {
-    if( $hook != LIT_ADMIN_HOOK )
-    return;
+    if( $hook != LIT_ADMIN_HOOK ) return;
     wp_enqueue_script('lit-modal-js', LIT_ACC_MODAL_JS);
 }
 function lit_enqueue_admin_css($hook) {
-    if( $hook != LIT_ADMIN_HOOK )
-    return;
+    if( $hook != LIT_ADMIN_HOOK ) return;
     wp_enqueue_style( 'custom-css', LIT_ADMIN_CSS);
 }
 function lit_enqueue_verify_js($hook) {
-    if( $hook != LIT_ADMIN_HOOK )
-    return;
+    if( $hook != LIT_ADMIN_HOOK ) return;
     wp_enqueue_script( 'lit-verify-js', LIT_VERIFY_JS);
 }
 
