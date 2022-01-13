@@ -26,6 +26,8 @@ define('LIT_ACC_MODAL_JS', 'https://cdn.jsdelivr.net/npm/lit-access-control-cond
 define('LIT_VERIFY_JS', 'https://jscdn.litgateway.com/index.web.js');
 define('LIT_ADMIN_CSS', WEB_URL . 'wp-lit-gated-admin.css');
 define('LIT_APP_CSS', WEB_URL . 'wp-lit-gated-app.css');
+define('LIT_JWT_API', 'https://jwt-verification-service.lit-protocol.workers.dev');
+define('LIT_JWT_TEST_TOKEN', "eyJhbGciOiJCTFMxMi0zODEiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJMSVQiLCJzdWIiOiIweGRiZDM2MGYzMDA5N2ZiNmQ5MzhkY2M4YjdiNjI4NTRiMzYxNjBiNDUiLCJjaGFpbiI6InBvbHlnb24iLCJpYXQiOjE2NDIwOTU2ODcsImV4cCI6MTY0MjEzODg4NywiYmFzZVVybCI6Im15LWR5bmFtaWMtY29udGVudC1zZXJ2ZXIuY29tIiwicGF0aCI6Ii9jYnJ0MjdrOW5lZnh6endudHYweWgiLCJvcmdJZCI6IiIsInJvbGUiOiIiLCJleHRyYURhdGEiOiIifQ.qT9tHi1jOwQ4ha89Sn-WyvQK9GVjjQrPzRK20IskkmxkQJy_cLLGuCNFgRQiDcNiBgajZ83qITlJye1ZbciNrcJiM-uNs8LuEOfftxegOgj_WY-o17G3ZUtte1ehZoNT");
 
 // -- define admin menu page
 define('LIT_ICON', site_url() . '/wp-content/plugins/wp-lit-gated/assets/favicon-16x16.png');
@@ -74,10 +76,11 @@ add_action( 'admin_enqueue_scripts', 'lit_enqueue_verify_js' );
 // ================================================================================
 // +                                     Helper                                   +
 // ================================================================================
-//
-// provide request header
-// @returns { Object } 
-//
+
+/**
+ * Request Header Parts
+ * @return { Object } 
+ */
 function lit_request(){
     $obj = new stdClass();
     $obj->protocol = isset($_SERVER["HTTPS"]) ? 'https://' : 'http://';
@@ -87,9 +90,12 @@ function lit_request(){
     return $obj;
 }
 
-//
-// Simple debug
-//
+/**
+ * Simple Log to the screen
+ * @param { String } title
+ * @param { String } slug
+ * @return { void } 
+ */
 function console($title, $log){
     $debug = false;
     if( ! $debug ) return;
@@ -100,6 +106,38 @@ function console($title, $log){
     print_r($log);
     echo '</code></pre>';
     echo '</div>';
+}
+
+/**
+ * JS Style API Fetching
+ * @param { String } $url
+ * @param { Array } $data
+ * @return { Object } response
+ *  eg.------------------------
+ *   $res = fetch(LIT_JWT_API, [
+ *      "jwt" => LIT_JWT_TEST_TOKEN
+ *  ]);
+ *  var_dump($res);
+ */
+function fetch($url, $data){
+    $ch = curl_init();
+
+    $headers = [
+        "User-Agent: Lit-Gated Wordpress Plugin",
+        "Content-Type: application/json"
+    ];
+
+    $json_string = json_encode($data);
+
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $json_string);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $data = curl_exec($ch);
+    curl_close($ch);
+
+    return json_decode($data);
 }
 
 // =================================================================================
@@ -150,7 +188,6 @@ add_action('wp_footer', function ($callback){
     console('New Found Match', $found_entry);
 
 
-
     // ==================================================================================
     // +                             Non-Lit-Gated Page                             +
     // ==================================================================================
@@ -169,7 +206,7 @@ add_action('wp_footer', function ($callback){
     $resource_id = '{"baseUrl":"'.lit_request()->base_url.'","path":"'.lit_request()->path.'","orgId":"","role":"","extraData":""}';
     
     // ==================================================================================
-    // +                                   NOT AUTHED                                   +
+    // +                              BEFORE POST REQUEST                               +
     // ==================================================================================
     if(empty($_POST)){
         echo '
@@ -179,9 +216,7 @@ add_action('wp_footer', function ($callback){
                     <h4>This page is Lit-Gated</h4>
                     <div id="lit-msg"></div>
                     <form action="'.htmlspecialchars(lit_request()->url).'" method="POST" id="lit-form">
-                        <input type="hidden" id="verified" name="verified" value="">
-                        <input type="hidden" id="header" name="header" value="">
-                        <input type="hidden" id="payload" name="payload" value="">
+                        <input type="hidden" id="jwt" name="jwt" value="">
                         <input type="submit" id="lit-submit" value="Unlock Page">
                     </form>
                 </section>
@@ -189,22 +224,18 @@ add_action('wp_footer', function ($callback){
         ';
     }else{   
     // ==================================================================================
-    // +                                     AUTHED                                     +
+    // +                                AFTER POST REQUEST                               +
     // ==================================================================================
-        // {alg: 'BLS12-381', typ: 'JWT'}
-        $header = json_decode(stripcslashes($_POST["header"]));
 
-        // {"iss":"LIT","sub":"___addr___","chain":"ethereum","iat":1641180354,"exp":1641223554,"baseUrl":"localhost","path":"/test2","orgId":"","role":"","extraData":""}
-        $payload = json_decode(stripcslashes($_POST["payload"]));
-        $verified = $_POST["verified"];
+        $res = fetch(LIT_JWT_API, ["jwt" => $_POST["jwt"]]);
 
         // LIT Developers: change this to the baseUrl you are authenticating, path, and other params in the payload
         // so that they match the resourceId that you used when you saved the signing condition to the Lit Protocol
-        if($verified == 'false' || 
-            $payload->baseUrl !== $_SERVER["HTTP_HOST"] ||
-            $payload->orgId !== '' ||
-            $payload->role !== '' ||
-            $payload->extraData !== ''){
+        if($res->verified == false || 
+            $res->payload->baseUrl !== $_SERVER["HTTP_HOST"] ||
+            $res->payload->orgId !== '' ||
+            $res->payload->role !== '' ||
+            $res->payload->extraData !== ''){
             echo "Not Authorized";
         }else{
             // LIT Developers: This is the success condition. Change this to whatever URL you want to redirect to if auth works properly
@@ -220,48 +251,34 @@ add_action('wp_footer', function ($callback){
     echo '<script>
         LitJsSdk.litJsSdkLoadedInALIT();
         (async () => {
+            const btnSubmit = document.getElementById("lit-submit");
+            const form = document.getElementById("lit-form");
+            
             console.log("---Mounted---");
-            const litNodeClient = new LitJsSdk.LitNodeClient();
-            await litNodeClient.connect();
-
-            const chain = "ethereum";
-            const authSig = await LitJsSdk.checkAndSignAuthMessage({chain: chain});
+            btnSubmit.classList.add("lit-active");
             const accessControlConditions = '.$access_controls.';
             const resourceId = '.$resource_id.';
-
             console.log("________");
             console.log(accessControlConditions);
             console.log(resourceId);
             const readable = await LitJsSdk.humanizeAccessControlConditions({accessControlConditions});
             document.getElementById("lit-msg").innerHTML = readable;
 
-            setTimeout(async () => {
 
-                // -- singing
-                // const test = await litNodeClient.saveSigningCondition({ accessControlConditions, chain, authSig, resourceId });
-                // console.log("Signed:", test);
-
-                // -- retrieve token
+            btnSubmit.addEventListener("click", async (e) => {
+                e.preventDefault();
+                const litNodeClient = new LitJsSdk.LitNodeClient();
+                await litNodeClient.connect();
+    
+                const chain = "ethereum";
+                const authSig = await LitJsSdk.checkAndSignAuthMessage({chain: chain});
                 const jwt = await litNodeClient.getSignedToken({ accessControlConditions, chain, authSig, resourceId });
-                console.log("🤌 JWT:", jwt);
-                console.log("🤌 accessControls: ", accessControlConditions);
-                console.log("🤌 resource_id: ", resourceId);
-                console.log("🤌 readable: ", readable);
+                
+                console.log("🤌 JWT:", jwt);                
+                document.getElementById("jwt").setAttribute("value", jwt);
 
-                const { verified, header, payload } = LitJsSdk.verifyJwt({jwt})
-                document.getElementById("verified").setAttribute("value", JSON.stringify(verified));
-                document.getElementById("header").setAttribute("value", JSON.stringify(header));
-                document.getElementById("payload").setAttribute("value", JSON.stringify(payload));
-
-                if(verified){
-                    document.getElementById("lit-submit").classList.add("lit-active");
-                    console.log(verified);
-                    console.log(header);
-                    console.log(payload);
-                    // document.getElementById("lit-form").submit();
-                }
-
-            }, 1000);
+                form.submit();
+            });
 
         })();
     </script>';

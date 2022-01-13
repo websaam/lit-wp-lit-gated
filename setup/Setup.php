@@ -1,11 +1,6 @@
 <?php
 
 /**
- * ========== CONSTANTS ==========
- */
-
-
-/**
  * Class for registering a new menu page
  */
 class SetupMenu{
