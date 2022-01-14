@@ -377,7 +377,7 @@ const handleSelectLinks = () => {
 
     const onSubmit = () => handleSelectLinksText();
 
-    const handleClick = (e) => {
+    const handleClick = async (e) => {
         const targetRow = e.target.parentElement.parentElement;
         const textarea = e.target.nextElementSibling;
         
@@ -385,10 +385,14 @@ const handleSelectLinks = () => {
         textarea.value = '';
         
         const textarea_id = textarea.getAttribute('id');;
-        wpLink.open(textarea_id);
+        await wpLink.open(textarea_id);
 
         var btnSubmit = document.getElementById('wp-link-submit');
         btnSubmit.addEventListener('click', onSubmit);
+
+        setTimeout(() => {
+            highlightSignedRowsOnSearchList();
+        }, 500);
     }
 
     const handleListener = (btn) => btn.addEventListener('click', handleClick);
@@ -571,14 +575,15 @@ const handleRowsToggle = () => {
 // @returns { void }
 //
 const highlightSignedRowsOnSearchList = () => {
+
     var search_results = [...document.getElementById('most-recent-results').querySelectorAll('input')];
     var signed_results = [...document.getElementsByClassName('signed')].map((e) => e.querySelector('.lit-selected-link').innerText);
 
     search_results.forEach((result) => {
         if(signed_results.includes(result.value)){
-
             // do your thing for the row
-            // result.parentElement.style.display = 'none';
+            result.parentElement.style.opacity = '0.4';
+            result.parentElement.style.pointerEvents = 'none';
         }
     });
 }
