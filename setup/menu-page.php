@@ -377,7 +377,7 @@ const handleSelectLinks = () => {
 
     const onSubmit = () => handleSelectLinksText();
 
-    const handleClick = async (e) => {
+    const handleClick = (e) => {
         const targetRow = e.target.parentElement.parentElement;
         const textarea = e.target.nextElementSibling;
         
@@ -385,7 +385,7 @@ const handleSelectLinks = () => {
         textarea.value = '';
         
         const textarea_id = textarea.getAttribute('id');;
-        await wpLink.open(textarea_id);
+        wpLink.open(textarea_id);
 
         var btnSubmit = document.getElementById('wp-link-submit');
         btnSubmit.addEventListener('click', onSubmit);
