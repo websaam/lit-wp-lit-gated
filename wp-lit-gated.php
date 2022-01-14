@@ -78,10 +78,10 @@ add_action( 'admin_enqueue_scripts', 'lit_enqueue_verify_js' );
 // ================================================================================
 
 /**
- * Request Header Parts
+ * Request Headers
  * @return { Object } 
  */
-function lit_request(){
+function request_headers(){
     $obj = new stdClass();
     $obj->protocol = isset($_SERVER["HTTPS"]) ? 'https://' : 'http://';
     $obj->url = "$obj->protocol$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
@@ -184,7 +184,7 @@ add_action('wp_footer', function ($callback){
     $found_entry = null;
     for($i = 0; $i < count($settings); $i++){
         $data = $settings[$i];
-        if($data->anchor == lit_request()->url){
+        if($data->anchor == request_headers()->url){
             $found_entry = $data;
         }
     }
@@ -194,8 +194,8 @@ add_action('wp_footer', function ($callback){
     // ==================================================================================
     // +                             Non-Lit-Gated Page                             +
     // ==================================================================================
-    if( ! in_array(lit_request()->url, $locked_list)){
-        console('***** Non-Lit-Gated Page *****', lit_request()->url);
+    if( ! in_array(request_headers()->url, $locked_list)){
+        console('***** Non-Lit-Gated Page *****', request_headers()->url);
         echo $content;
         exit();
     }
@@ -206,7 +206,7 @@ add_action('wp_footer', function ($callback){
  
     // -- get data from database
     $access_controls = $found_entry->accs;
-    $resource_id = '{"baseUrl":"'.lit_request()->base_url.'","path":"'.lit_request()->path.'","orgId":"","role":"","extraData":""}';
+    $resource_id = '{"baseUrl":"'.request_headers()->base_url.'","path":"'.request_headers()->path.'","orgId":"","role":"","extraData":""}';
     
     // ==================================================================================
     // +                              BEFORE POST REQUEST                               +
@@ -218,7 +218,7 @@ add_action('wp_footer', function ($callback){
                     <img src="https://litprotocol.com/lit-logo.png" alt="Lit Protocol" />
                     <h4>This page is Lit-Gated</h4>
                     <div id="lit-msg"></div>
-                    <form action="'.htmlspecialchars(lit_request()->url).'" method="POST" id="lit-form">
+                    <form action="'.htmlspecialchars(request_headers()->url).'" method="POST" id="lit-form">
                         <input type="hidden" id="jwt" name="jwt" value="">
                         <input type="submit" id="lit-submit" value="Unlock Page">
                     </form>
@@ -236,6 +236,7 @@ add_action('wp_footer', function ($callback){
         // so that they match the resourceId that you used when you saved the signing condition to the Lit Protocol
         if($res->verified == false || 
             $res->payload->baseUrl !== $_SERVER["HTTP_HOST"] ||
+            $res->payload->path !== request_headers()->path ||
             $res->payload->orgId !== '' ||
             $res->payload->role !== '' ||
             $res->payload->extraData !== ''){

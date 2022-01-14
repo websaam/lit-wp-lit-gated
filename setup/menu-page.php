@@ -566,6 +566,23 @@ const handleRowsToggle = () => {
     });
 }
 
+//
+// Handle highlight signed rows on search list
+// @returns { void }
+//
+const highlightSignedRowsOnSearchList = () => {
+    var search_results = [...document.getElementById('most-recent-results').querySelectorAll('input')];
+    var signed_results = [...document.getElementsByClassName('signed')].map((e) => e.querySelector('.lit-selected-link').innerText);
+
+    search_results.forEach((result) => {
+        if(signed_results.includes(result.value)){
+
+            // do your thing for the row
+            // result.parentElement.style.display = 'none';
+        }
+    });
+}
+
 
 // -------------------- Entry Point -------------------- //
 (() => {
