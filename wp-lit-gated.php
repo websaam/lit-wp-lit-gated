@@ -244,7 +244,7 @@ add_action('wp_footer', function ($callback){
             // LIT Developers: This is the success condition. Change this to whatever URL you want to redirect to if auth works properly
             echo $content;
         }
-        
+        exit();
     }
     
     // =================================================================================
