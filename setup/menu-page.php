@@ -15,7 +15,7 @@ _WP_Editors::wp_link_dialog();
  * @param { String } $path : the resource path you want to sign
  * @param { Boolean } $signed : if this row a signed resource
  * @param { Boolean } withoutWrapper : Including the outer div or not
- * @returns { String } HTML 
+ * @return { String } HTML 
  */
 function get_snippet($accs = '', $path = '', $signed = false, $withoutWrapper = false){
 
@@ -24,32 +24,43 @@ function get_snippet($accs = '', $path = '', $signed = false, $withoutWrapper = 
     $wrapper_end = $withoutWrapper ? '' : '</div>';
 
     return $wrapper_start . '
-                <div class="lit-signed">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                    </svg>
-                </div>
-                <div class="lit-table-row__panel">
-                    <section class="lit-btn-close">
-                        <div class="lit-table-row__close"></div>
-                    </section>
-                    <section class="lit-btn-sign">
-                        <div class="lit-btn-sign__text">Sign</div>
-                    </section>
-                </div>
-                <div class="lit-table-col lit-table-col__id">
-                    <span>1</span>
-                </div>
-                <div class="lit-table-col">
-                    <div class="lit-humanised">Not ready yet...</div>
-                    <textarea class="input-accs" rows="4">'.$accs.'</textarea>
-                    <div class="lit-btn-create-requirement lit-btn-secondary">Create Requirement</div>
-                </div>
-                <div class="lit-table-col lit-table-col__path">
-                    <div class="lit-btn-select-link lit-btn-secondary">Select Link</div>
-                    <textarea class="lit-selected-link">'.$path.'</textarea>
-                </div>
-            ' . $wrapper_end;
+
+        <!-- Lit Signed -->
+        <div class="lit-signed">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+            </svg>
+        </div>
+
+        <!-- Row Panel -->
+        <div class="lit-table-row__panel">
+            <section class="lit-btn-close">
+                <div class="lit-table-row__close"></div>
+            </section>
+            <section class="lit-btn-sign">
+                <div class="lit-btn-sign__text">Sign</div>
+            </section>
+        </div>
+
+        <!-- Row #id --> 
+        <div class="lit-table-col lit-table-col__id">
+            <span>1</span>
+        </div>
+
+        <!-- Row Accs -->
+        <div class="lit-table-col">
+            <div class="lit-humanised">Not ready yet...</div>
+            <textarea class="input-accs" rows="4">'.$accs.'</textarea>
+            <div class="lit-btn-create-requirement lit-btn-secondary">Create Requirement</div>
+        </div>
+
+        <!-- Row Select Link -->
+        <div class="lit-table-col lit-table-col__path">
+            <div class="lit-btn-select-link lit-btn-secondary">Select Link</div>
+            <textarea class="lit-selected-link">'.$path.'</textarea>
+        </div>
+        
+    ' . $wrapper_end;
 }
 ;?>
 
@@ -92,7 +103,7 @@ function get_snippet($accs = '', $path = '', $signed = false, $withoutWrapper = 
                         <div class="lit-table-col">Path</div>
                     </div><!-- ...header -->
 
-                    <!-- ===== FOR LOOP CONTENT BEGINS ===== -->
+                    <!-- ===== PHP FOR LOOP CONTENT BEGINS ===== -->
                     <?php
                     if(count($settings) > 0){
                         foreach($settings as $i=>$setting){
@@ -100,7 +111,7 @@ function get_snippet($accs = '', $path = '', $signed = false, $withoutWrapper = 
                         }
                     }
                     ;?>
-                    <!-- ===== ...FOR LOOP CONTENT ENDS ===== -->
+                    <!-- ===== ...PHP FOR LOOP CONTENT ENDS ===== -->
                 </div>
 
                 <!-- control -->
@@ -136,7 +147,7 @@ function get_snippet($accs = '', $path = '', $signed = false, $withoutWrapper = 
 // A modified forEach function but async
 // @param { Array } array
 // @param { Function } callback
-// @returns { void } 
+// @return { void } 
 //
 async function asyncForEach(array, callback) {
     for (let index = 0; index < array.length; index++) {
@@ -145,16 +156,9 @@ async function asyncForEach(array, callback) {
 }
 
 //
-// Break down a url into an object
-// @param { String } https://localhost/page-test-1/
-// @returns { Object }
-//
-const sanitise = str => (str.endsWith('/') ? str.slice(0, -1) : str)
-    .replaceAll('https://', '')
-    .replaceAll('http://', '');
-
-//
 // Remove trailing slash
+// @param { String } str 
+// @returns { String } str without trailing /
 //
 const removeTrailingSlash = (str) => {
     return (str.endsWith('/') ? str.slice(0, -1) : str);
@@ -164,14 +168,14 @@ const removeTrailingSlash = (str) => {
 
 // 
 // Unmount the modal from the page
-// @returns { void }
+// @return { void }
 //
 const closeModal = () => ACCM.ReactContentRenderer.unmount(document.getElementById("shareModal"));
 
 // 
 // Mount the modal on the page
 // @param { Function }
-// @returns { void }
+// @return { void }
 //
 const openShareModal = (callback) => {
     ACCM.ReactContentRenderer.render(
@@ -196,7 +200,7 @@ const openShareModal = (callback) => {
 //
 // Check if String is <a> tag or just the href src
 // @param { String } str
-// @returns { Boolean } 
+// @return { Boolean } 
 //
 const isAnchor = (str) => {
     const href_regex = /href="([^\'\"]+)/g;
@@ -206,14 +210,15 @@ const isAnchor = (str) => {
 //
 // Get href inside <a> tag or just the href src
 // @param { String } str
-// @returns { String } href
+// @return { String } href
 //
 const getHref = (str) => isAnchor(str) ? str.split('"')[1] : str;
 
 //
 // Split URL into parts as resources
 // @param { String } url
-// @returns { base_url, path }
+// @return { base_url, path }
+//
 const getURLParts = (url) => {
     const data = url.split('/');
     const base_url = data[2];
@@ -225,7 +230,7 @@ const getURLParts = (url) => {
 
 //
 // Compress all fields into a single string
-// @returns { String } 
+// @return { String } 
 //
 const compressedData = () => {
     var inputs = document.getElementsByClassName('input-accs');
@@ -264,7 +269,7 @@ const compressedData = () => {
 // -------------------- Handler -------------------- //
 //
 // Handle deleting row
-// @returns { void } 
+// @return { void } 
 //
 const handleRowDeletion = () =>{
     console.log("Handle Row Deletion");
@@ -286,7 +291,7 @@ const handleRowDeletion = () =>{
 //
 // Handle adding new row
 // @param { Function } callback
-// @returns { void }
+// @return { void }
 //
 const handleAddNewRow = (callback) => {
     const btnNewRow = document.getElementById('btn-lit-add-row');
@@ -308,7 +313,7 @@ const handleAddNewRow = (callback) => {
 
 //
 // Handle form submission
-// @returns { void } 
+// @return { void } 
 //
 const handleSubmit = () => {
     const btnSubmit = document.getElementById('btn-lit-submit');
@@ -327,7 +332,7 @@ const handleSubmit = () => {
 
 //
 // Handle create requirement buttons
-// @returns { void } 
+// @return { void } 
 //
 const handleCreateRequirementsBtns = () => {
     const btns = document.getElementsByClassName('lit-btn-create-requirement');
@@ -345,15 +350,12 @@ const handleCreateRequirementsBtns = () => {
 
     const handleListener = (btn) => btn.addEventListener('click', handleClick);
 
-    [...btns].forEach(handleListener);
-
-    // re-apply
-    
+    [...btns].forEach(handleListener);    
 }
 
 //
 // Handle humanised access control conditions
-// @returns { void } 
+// @return { void } 
 //
 const handleHumanised = () => {
     const fields = document.getElementsByClassName('lit-humanised');
@@ -368,7 +370,7 @@ const handleHumanised = () => {
 
 //
 // Handle Select Link buttons
-// @returns { void }
+// @return { void }
 //
 const handleSelectLinks = () => {
     const btns = document.getElementsByClassName('lit-btn-select-link');
@@ -396,7 +398,7 @@ const handleSelectLinks = () => {
 
 //
 // Handle Selected Link Text
-// @returns { void } 
+// @return { void } 
 //
 const handleSelectLinksText = () => {
 
@@ -411,7 +413,7 @@ const handleSelectLinksText = () => {
 
 //
 // Handle when access control conditions change
-// @returns { void }
+// @return { void }
 //
 const handleOnAccsInputChange = () => {
     [...document.getElementsByClassName('input-accs')].forEach((input) => {
@@ -423,6 +425,7 @@ const handleOnAccsInputChange = () => {
 
 //
 // Handle rows index and update automatically when adding new row
+// @returns { void } 
 //
 const handleRowsIndex = () => {
     const rows = document.getElementsByClassName('lit-table-row');
@@ -444,7 +447,7 @@ const handleRowsIndex = () => {
 
 //
 // Handle sign buttons
-// @returns { void } 
+// @return { void } 
 //
 const handleSignBtns = () => {
     var btns = document.getElementsByClassName('lit-btn-sign');
@@ -521,21 +524,21 @@ const handleSignBtns = () => {
 
 //
 // Handle hide/show rows that are signed/unsigned
-// @returns { void }
+// @return { void }
 //
 const handleRowsToggle = () => {
 
+    // -- prepare
     const rows = document.getElementsByClassName('signed');
-
     const btn = document.getElementById('lit-toggle-signed');
     
+    // -- prepare re-usable methods
     const hideRows = () => {
         localStorage['hide-signed-rows'] = true;
         [...rows].forEach((row) => {
             row.classList.add('hide');
         });
     }
-
     const showRows = () => {
         localStorage['hide-signed-rows'] = false;
         [...rows].forEach((row) => {
@@ -543,6 +546,7 @@ const handleRowsToggle = () => {
         });
     }
 
+    // check local stroage settings
     if(localStorage['hide-signed-rows'] == 'true'){
         hideRows();
         btn.checked = true;
@@ -551,6 +555,7 @@ const handleRowsToggle = () => {
         btn.checked = false;
     }
 
+    //  when the button is clicked
     btn.addEventListener('click', (e) => {
 
         if(btn.checked){

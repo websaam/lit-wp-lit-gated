@@ -141,26 +141,29 @@ function fetch($url, $data){
 }
 
 // =================================================================================
-// +                                Start Capturing                                +
+// +                          ↓↓↓↓↓ Start Capturing ↓↓↓↓↓                          +
 // =================================================================================
-//
-// scan through the whole page and store its content to a variable
-// all HTML pages are essential a string
-//
+
+// Start scanning the whole page from the wp_head wordpress hook
 add_action('wp_head', function(){
     ob_start();
 });
+
+// Stop scanning the page from the wp_footer hook and store its
+// value into $content
 add_action('wp_footer', function ($callback){
+
     $content = ob_get_clean();
 
 // =================================================================================
-// +                              Completed Capturing                              +
+// +                        ↑↑↑↑↑ Completed Capturing ↑↑↑↑↑                         +
 // =================================================================================
     
+    // -- prepare admin page data
     $settings = json_decode(base64_decode(get_option('lit-settings')));
 
     // ================================================================================
-    // +                        No Acccess Control Pages Setup                        +
+    // +                 No Page Has Been Setup for Lit-Gated Content                 +
     // ================================================================================
     if($settings == null){
         echo $content;
@@ -168,16 +171,16 @@ add_action('wp_footer', function ($callback){
     }
 
     // =================================================================================
-    // +                                   All Pages                                   +
+    // +                                Preparing Data                                 +
     // =================================================================================
     
-    // -- Locked list
+    // -- A list of pages that's Lit-Gated
     $locked_list = array_map(function($data){
         return $data->anchor;
     }, $settings);
     console("List", $locked_list);
 
-    // -- Find the correct entry on the list
+    // -- Find that particular Lit-Gated entry for this page
     $found_entry = null;
     for($i = 0; $i < count($settings); $i++){
         $data = $settings[$i];
@@ -249,33 +252,48 @@ add_action('wp_footer', function ($callback){
     // =================================================================================
     echo '<script src="'.LIT_VERIFY_JS.'"></script>';
     echo '<script>
+
+        // -- connect LitProtocol
         LitJsSdk.litJsSdkLoadedInALIT();
+
         (async () => {
+            console.log("---Mounted---");
+
+            // -- prepare dom
             const btnSubmit = document.getElementById("lit-submit");
             const form = document.getElementById("lit-form");
-            
-            console.log("---Mounted---");
-            btnSubmit.classList.add("lit-active");
+
+            // -- prepare args for jwt
             const accessControlConditions = '.$access_controls.';
             const resourceId = '.$resource_id.';
             console.log("________");
             console.log(accessControlConditions);
             console.log(resourceId);
             const readable = await LitJsSdk.humanizeAccessControlConditions({accessControlConditions});
+            
+            // -- set display
             document.getElementById("lit-msg").innerHTML = readable;
-
+            btnSubmit.classList.add("lit-active");
+            
+            // -- when "Unlock" button is clicked
             btnSubmit.addEventListener("click", async (e) => {
                 e.preventDefault();
+
+                // -- prepare lit network
                 const litNodeClient = new LitJsSdk.LitNodeClient();
                 await litNodeClient.connect();
-    
+                
+                // -- validate web3
                 const chain = "ethereum";
                 const authSig = await LitJsSdk.checkAndSignAuthMessage({chain: chain});
+
+                // -- request token
                 const jwt = await litNodeClient.getSignedToken({ accessControlConditions, chain, authSig, resourceId });
                 
                 console.log("🤌 JWT:", jwt);                
                 document.getElementById("jwt").setAttribute("value", jwt);
 
+                // -- submit form to verify token
                 form.submit();
             });
 

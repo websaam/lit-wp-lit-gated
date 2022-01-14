@@ -39,7 +39,7 @@ class SetupMenu{
     /** ----- MENU ----- */
     /**
      * Register a new menu 
-     * @returns { void } 
+     * @return { void } 
      */
     function register_menu(){
         add_menu_page(
@@ -55,7 +55,7 @@ class SetupMenu{
 
     /**
      * Content page of the menu
-     * @returns { void }
+     * @return { void }
      */
     function content(){
         include_once($this->menu_page);
