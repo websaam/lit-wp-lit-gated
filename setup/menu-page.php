@@ -619,6 +619,7 @@ const handleEdits = () => {
     const handleClick = (e) => {
         const row = e.target.parentElement;
         e.target.classList.add('closed');
+        row.classList.remove('signed');
         row.setAttribute('data-created-at', getTimestamp());
     }
 
