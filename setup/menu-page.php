@@ -619,8 +619,20 @@ const handleEdits = () => {
     const handleClick = (e) => {
         const row = e.target.parentElement;
         e.target.classList.add('closed');
-        setTimeout(() => row.classList.remove('signed'), 300);
         row.setAttribute('data-created-at', getTimestamp());
+
+        // wait 0.3s to finish fading out animation
+        setTimeout(() => {
+            row.classList.remove('signed');
+            // submit data
+            const mainField = document.getElementById('lit-settings');
+            const form = document.getElementById('lit-form');
+            const data = compressedData();
+            mainField.value = data;
+            console.log("Data:", data);
+            form.submit();
+        }, 300);
+
     }
 
     [...overlays].forEach((overlay) => {
