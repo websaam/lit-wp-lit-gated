@@ -11,7 +11,7 @@
  */
  
 defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
-
+define('DEBUG_GATED_PAGE', false);
 
 // =================================================================================
 // +                                Define Constants                               +
@@ -97,7 +97,7 @@ function request_headers(){
  * @return { void } 
  */
 function console($title, $log){
-    $debug = false;
+    $debug = DEBUG_GATED_PAGE;
     if( ! $debug ) return;
 
     echo '<div class="lit-debug">';
@@ -206,7 +206,9 @@ add_action('wp_footer', function ($callback){
  
     // -- get data from database
     $access_controls = $found_entry->accs;
-    $resource_id = '{"baseUrl":"'.request_headers()->base_url.'","path":"'.request_headers()->path.'","orgId":"","role":"","extraData":""}';
+    $created_at = $found_entry->created_at;
+
+    $resource_id = '{"baseUrl":"'.request_headers()->base_url.'","path":"'.request_headers()->path.'","orgId":"","role":"","extraData":"'.$created_at.'"}';
     
     // ==================================================================================
     // +                              BEFORE POST REQUEST                               +
@@ -239,7 +241,7 @@ add_action('wp_footer', function ($callback){
             $res->payload->path !== request_headers()->path ||
             $res->payload->orgId !== '' ||
             $res->payload->role !== '' ||
-            $res->payload->extraData !== ''){
+            $res->payload->extraData !== $created_at){
             echo "Not Authorized";
         }else{
             // LIT Developers: This is the success condition. Change this to whatever URL you want to redirect to if auth works properly
@@ -267,9 +269,10 @@ add_action('wp_footer', function ($callback){
             // -- prepare args for jwt
             const accessControlConditions = '.$access_controls.';
             const resourceId = '.$resource_id.';
+            console.log(resourceId);
             console.log("________");
             console.log(accessControlConditions);
-            console.log(resourceId);
+            console.log("RESOURCE_ID:", resourceId);
             const readable = await LitJsSdk.humanizeAccessControlConditions({accessControlConditions});
             
             // -- set display

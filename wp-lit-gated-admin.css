@@ -236,19 +236,41 @@ section.lit-btn-sign .lit-btn-sign__text{
     opacity: 0;
     pointer-events: none;
     transition: 0.3s ease;
+    cursor: pointer;
+}
+.closed.lit-signed{
+    pointer-events: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
 }
 .signed .lit-signed{
     visibility: visible;
     opacity: 1;
     pointer-events: unset;
     display: flex;
+    justify-content: center;
 }
-
+.lit-signed > section {
+    display: grid;
+    height: 48px;
+    margin: auto;
+}
 .lit-signed svg {
     width: 36px;
     height: 100%;
-    color: var(--alert);
+    color: green;
     margin: auto;
+}
+
+.lit-signed span{
+    color: white;
+    text-align: center;
+}
+.lit-signed *{
+    pointer-events: none;
+}
+.hide{
+    display: none;
 }
 /** ----- Fields ----- */
 textarea{
@@ -264,13 +286,7 @@ textarea{
 .input-accs{
     transition: 0.3s ease;
 }
-/** ----- Signed ----- */
-.signed .lit-table-row__panel{
-    display: none !important;
-}
-.hide{
-    display: none;
-}
+
 
 /** ----- Controls ----- */
 .lit-menu-controls {

@@ -11,25 +11,29 @@ _WP_Editors::wp_link_dialog();
 
 /**
  * Get the row snippet
+ * @param { String } $created_at : timestamp that this data was created at
  * @param { String } $accs : access control conditions in a readable format
  * @param { String } $path : the resource path you want to sign
  * @param { Boolean } $signed : if this row a signed resource
  * @param { Boolean } withoutWrapper : Including the outer div or not
  * @return { String } HTML 
  */
-function get_snippet($accs = '', $path = '', $signed = false, $withoutWrapper = false){
+function get_snippet($created_at, $accs = '', $path = '', $signed = false, $withoutWrapper = false){
 
     $signed_class = $signed ? 'signed' : '';
-    $wrapper_start = $withoutWrapper ? '' : '<div class="lit-table-row '.$signed_class.'">';
+    $wrapper_start = $withoutWrapper ? '' : '<div data-created-at="'.$created_at.'" class="lit-table-row '.$signed_class.'">';
     $wrapper_end = $withoutWrapper ? '' : '</div>';
 
     return $wrapper_start . '
 
         <!-- Lit Signed -->
         <div class="lit-signed">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-            </svg>
+            <section>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                </svg>
+                <span>Click to edit</span>
+            </section>
         </div>
 
         <!-- Row Panel -->
@@ -107,7 +111,7 @@ function get_snippet($accs = '', $path = '', $signed = false, $withoutWrapper = 
                     <?php
                     if(count($settings) > 0){
                         foreach($settings as $i=>$setting){
-                            echo get_snippet($setting->accs, $setting->anchor, $setting->signed);
+                            echo get_snippet($setting->created_at, $setting->accs, $setting->anchor, $setting->signed);
                         }
                     }
                     ;?>
@@ -163,6 +167,12 @@ async function asyncForEach(array, callback) {
 const removeTrailingSlash = (str) => {
     return (str.endsWith('/') ? str.slice(0, -1) : str);
 }
+
+//
+// Get current timestamp
+// @returns { Int } timestamp
+//
+const getTimestamp = () => new Date().getTime();
 
 // -------------------- Access Control Conditions Modal -------------------- //
 
@@ -244,15 +254,18 @@ const compressedData = () => {
         console.log(`(${i}) -----`);
         const input = inputs[i];
         const anchor_tag = paths[i];
+        const current_row = rows[i];
         
         const href = getHref(anchor_tag.value);
         const { base_url, path } = getURLParts(href);
-        const signed = rows[i].classList.contains('signed');
+        const signed = current_row.classList.contains('signed');
+        const created_at = current_row.getAttribute('data-created-at');
         
         console.log("🔥 anchor:", href);
         console.log("🔥 base_url:", base_url);
         console.log("🔥 path:", path);
         console.log("🔥 signed:", signed);
+        console.log("🔥 created_at:", created_at);
 
         var obj = {};
         obj.accs = input.value;
@@ -260,6 +273,7 @@ const compressedData = () => {
         obj.path = path;
         obj.anchor = href;
         obj.signed = signed;
+        obj.created_at = created_at;
 
         bucket.push(obj);
     }); 
@@ -289,11 +303,12 @@ const handleRowDeletion = () =>{
 }
 
 //
-// Handle adding new row
-// @param { Function } callback
+// Handle "add row" button
+// @param { Function } callback | a list of states/actions you want to update 
+// after a new row is added.
 // @return { void }
 //
-const handleAddNewRow = (callback) => {
+const handleBtnAddRow = (callback) => {
     const btnNewRow = document.getElementById('btn-lit-add-row');
     const tableBody = document.getElementById('lit-table-body');
     const nextIndex = document.getElementsByClassName('lit-table-row');
@@ -302,10 +317,13 @@ const handleAddNewRow = (callback) => {
         console.log("Added new row");
         const template = Object.assign(document.createElement('div'), {
             classList: 'lit-table-row',
-            innerHTML: `<?php echo get_snippet('','','', true) ;?>`,
+            innerHTML: `<?php echo get_snippet('', '','','', true) ;?>`,
         });
+        const timestamp = getTimestamp();
+        template.setAttribute("data-created-at", timestamp);
         tableBody.appendChild(template);
         
+        // list of actions
         callback();
 
     });
@@ -334,7 +352,7 @@ const handleSubmit = () => {
 // Handle create requirement buttons
 // @return { void } 
 //
-const handleCreateRequirementsBtns = () => {
+const handleBtnsCreateRequirements = () => {
     const btns = document.getElementsByClassName('lit-btn-create-requirement');
 
     const handleClick = (e) => {
@@ -372,10 +390,10 @@ const handleHumanised = () => {
 // Handle Select Link buttons
 // @return { void }
 //
-const handleSelectLinks = () => {
+const handleBtnsSelectLink = () => {
     const btns = document.getElementsByClassName('lit-btn-select-link');
 
-    const onSubmit = () => handleSelectLinksText();
+    const onSubmit = () => handleBtnsSelectLinkInnerText();
 
     const handleClick = (e) => {
         const targetRow = e.target.parentElement.parentElement;
@@ -404,7 +422,7 @@ const handleSelectLinks = () => {
 // Handle Selected Link Text
 // @return { void } 
 //
-const handleSelectLinksText = () => {
+const handleBtnsSelectLinkInnerText = () => {
 
     [...document.getElementsByClassName('lit-selected-link')].forEach((textarea) => {
         if( textarea.value.length > 1){
@@ -453,7 +471,7 @@ const handleRowsIndex = () => {
 // Handle sign buttons
 // @return { void } 
 //
-const handleSignBtns = () => {
+const handleBtnsSign = () => {
     var btns = document.getElementsByClassName('lit-btn-sign');
 
     const handleClick = async (e) => {
@@ -480,9 +498,9 @@ const handleSignBtns = () => {
         }
         
         // -- prompt message
-        const message = `WARNING! Are you sure you want to sign this resource?\nOnce it's signed it cannot be changed or deleted forever.\n\n${accs}\n${url}\n\n \n`;
-        const confirmed = confirm(message) == true ? true : false;
-        if(! confirmed ) return;
+        // const message = `WARNING! Are you sure you want to sign this resource?\nOnce it's signed it cannot be changed or deleted forever.\n\n${accs}\n${url}\n\n \n`;
+        // const confirmed = confirm(message) == true ? true : false;
+        // if(! confirmed ) return;
         
         // -- prepare resource id
         const chain = "ethereum";
@@ -492,14 +510,18 @@ const handleSignBtns = () => {
 
         const href = getHref(link_textarea.value);
         const { base_url, path } = getURLParts(href);
+        
+        const timestamp = target_row.getAttribute('data-created-at');
 
         const resourceId = {
             baseUrl: base_url,
             path,
             orgId: "",
             role: "",
-            extraData: "",
+            extraData: timestamp,
         };
+
+        console.log("RESOURCE_ID:", resourceId);
 
         // -- start signing
         const sign = await litNodeClient.saveSigningCondition({ 
@@ -588,6 +610,23 @@ const highlightSignedRowsOnSearchList = () => {
     });
 }
 
+//
+// Handle edit buttons
+//
+const handleEdits = () => {
+    const overlays = document.getElementsByClassName('lit-signed');
+
+    const handleClick = (e) => {
+        const row = e.target.parentElement;
+        e.target.classList.add('closed');
+        row.setAttribute('data-created-at', getTimestamp());
+    }
+
+    [...overlays].forEach((overlay) => {
+        overlay.addEventListener('click', handleClick);
+    });
+}
+
 
 // -------------------- Entry Point -------------------- //
 (() => {
@@ -597,24 +636,25 @@ const highlightSignedRowsOnSearchList = () => {
     
     // -- list of handlers
     handleSubmit();
-    handleAddNewRow(() => {
+    handleBtnAddRow(() => {
         handleRowDeletion();
-        handleCreateRequirementsBtns();
+        handleBtnsCreateRequirements();
         handleRowsIndex();
-        handleSelectLinks();
-        handleSelectLinksText();
+        handleBtnsSelectLink();
+        handleBtnsSelectLinkInnerText();
         handleOnAccsInputChange();
-        handleSignBtns();
+        handleBtnsSign();
     });
     handleRowDeletion();
-    handleCreateRequirementsBtns();
+    handleBtnsCreateRequirements();
     handleHumanised();
-    handleSelectLinks();
+    handleBtnsSelectLink();
     handleOnAccsInputChange();
     handleRowsIndex();
-    handleSelectLinksText();
-    handleSignBtns();
+    handleBtnsSelectLinkInnerText();
+    handleBtnsSign();
     handleRowsToggle();
+    handleEdits();
 
 })();
 
