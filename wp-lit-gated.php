@@ -180,11 +180,13 @@ add_action('wp_footer', function ($callback){
     }, $settings);
     console("List", $locked_list);
 
+    $page_url = strtok(request_headers()->url, '?'); // this strips out any URL vars
+
     // -- Find that particular Lit-Gated entry for this page
     $found_entry = null;
     for($i = 0; $i < count($settings); $i++){
         $data = $settings[$i];
-        if($data->anchor == request_headers()->url){
+        if($data->anchor == $page_url){
             $found_entry = $data;
         }
     }
@@ -194,8 +196,8 @@ add_action('wp_footer', function ($callback){
     // ==================================================================================
     // +                             Non-Lit-Gated Page                             +
     // ==================================================================================
-    if( ! in_array(request_headers()->url, $locked_list)){
-        console('***** Non-Lit-Gated Page *****', request_headers()->url);
+    if( ! in_array($page_url, $locked_list)){
+        console('***** Non-Lit-Gated Page *****', $page_url);
         echo $content;
         exit();
     }
