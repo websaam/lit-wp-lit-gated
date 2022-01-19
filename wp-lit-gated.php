@@ -82,11 +82,17 @@ add_action( 'admin_enqueue_scripts', 'lit_enqueue_verify_js' );
  * @return { Object } 
  */
 function request_headers(){
+
     $obj = new stdClass();
     $obj->protocol = isset($_SERVER["HTTPS"]) ? 'https://' : 'http://';
-    $obj->url = "$obj->protocol$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+    $obj->url = get_permalink();
     $obj->base_url = "$_SERVER[HTTP_HOST]";
-    $obj->path = rtrim($_SERVER['REQUEST_URI'],"/");
+
+    // remove http:// or https:// in the url
+    // remve base url
+    // remove trailing slash (so it's compatible for resourceId->path)
+    $obj->path = rtrim(str_replace([$obj->protocol, $obj->base_url], ['', ''], $obj->url), "/");
+
     return $obj;
 }
 
