@@ -1,6 +1,6 @@
 # Quickstart
 
-Simply download this repo [here](https://github.com/LIT-Protocol/lit-wp-lit-gated/archive/refs/heads/main.zip), go to the "Plugins" section in your WordPress dashboard, and upload the zip to start lit-gating your content! Look for the "Lit_Gated" item in your menu on the left after the plugin is installed.
+Simply download this repo [here](https://github.com/LIT-Protocol/lit-wp-lit-gated/archive/refs/heads/main.zip), go to the "Plugins" section in your WordPress dashboard, and upload the zip to start lit-gating your content! Look for the "Lit-Gated" item in your menu on the left after the plugin is installed.
 
 ## Warning
 
