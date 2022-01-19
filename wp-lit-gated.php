@@ -223,7 +223,7 @@ add_action('wp_footer', function ($callback){
     // ==================================================================================
     if(empty($_POST)){
         if( ! $found_entry->signed){
-            echo '<b>This page is not signed yet. You will not be able to unlock this page even if you met the requirements.</b>';
+            echo '<b>This page is not signed yet. You will not be able to unlock this page even if you\'ve met the requirements.</b>';
         }
         echo '
             <div class="lit-gated">
