@@ -294,7 +294,18 @@ add_action('wp_footer', function ($callback){
                 
                 // -- validate web3
                 const chain = "ethereum";
-                const authSig = await LitJsSdk.checkAndSignAuthMessage({chain: chain});
+                let authSig;
+                try {
+                    authSig = await LitJsSdk.checkAndSignAuthMessage({chain: chain});
+                } catch (error) {
+                    console.log("Error:", error);
+                    if (error.errorCode === "no_wallet") {
+                        alert("Please install an Ethereum wallet to use this feature.  You can do this by installing MetaMask from https://metamask.io/");
+                    } else {
+                        alert("An unknown error occurred when trying to get a signature from your wallet.  You can find it in the console.  Please email support@litprotocol.com with a bug report");
+                    }
+                    return;
+                }
 
                 // -- request token
                 const jwt = await litNodeClient.getSignedToken({ accessControlConditions, chain, authSig, resourceId });
