@@ -1,4 +1,4 @@
-=== Lit Protocol ===
+=== Lit Protocol Blockchain Gating ===
 Contributors: litprotocol
 Donate link: https://litprotocol.com
 Tags: Access Control, Blockchain, Ethereum, NFT, DAO
