@@ -1,21 +1,12 @@
-# Quickstart
-
-Simply download this repo [here](https://github.com/LIT-Protocol/lit-wp-lit-gated/archive/refs/heads/main.zip), go to the "Plugins" section in your WordPress dashboard, and upload the zip to start lit-gating your content! Look for the "Lit-Gated" item in your menu on the left after the plugin is installed.
-
-## Warning
-
-You must disable the "AMP" Wordpress plugin or else the lit-gating will not work on mobile.
-
-# Demo
-
-![](https://assets.wzac.io/lit-protocol/lit-wp-lit-gated-1.png)
-
-![](https://assets.wzac.io/lit-protocol/lit-wp-lit-gated-2.png)
-
-# Note
-
-This plugin uses https://github.com/LIT-Protocol/jwt-verification-service to verify JWT.
-
-# License
-
-GPLv3
+=== Plugin Name ===
+Contributors: litprotocol
+Donate link: https://litprotocol.com
+Tags: Access Control, Blockchain, Ethereum, NFT, DAO
+Requires at least: 4.7
+Tested up to: 5.8.3
+Stable tag: 4.3
+Requires PHP: 7.0
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+ 
+Gate your content based on blockchain conditions like NFT ownership.
