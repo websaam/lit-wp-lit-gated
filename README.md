@@ -15,3 +15,7 @@ You must disable the "AMP" Wordpress plugin or else the lit-gating will not work
 # Note
 
 This plugin uses https://github.com/LIT-Protocol/jwt-verification-service to verify JWT.
+
+# License
+
+GPLv3
