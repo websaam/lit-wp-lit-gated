@@ -59,7 +59,6 @@ function lit_enqueue_admin_css($hook) {
     wp_enqueue_style( 'custom-css', LIT_ADMIN_CSS);
 }
 function lit_enqueue_verify_js($hook) {
-    if( $hook != LIT_ADMIN_HOOK ) return;
     wp_enqueue_script( 'lit-verify-js', LIT_VERIFY_JS);
 }
 
@@ -67,13 +66,15 @@ function lit_enqueue_verify_js($hook) {
 function lit_enqueue_app_css($hook) {
     wp_enqueue_style( 'lit-app-css', LIT_APP_CSS);
 }
-add_action( 'wp_enqueue_scripts', 'lit_enqueue_app_css' );
-
-// -- execute
+// -- execute admin scripts
 add_action( 'admin_enqueue_scripts', 'lit_enqueue_acc_modal_css' );
 add_action( 'admin_enqueue_scripts', 'lit_enqueue_acc_modal_js' );
 add_action( 'admin_enqueue_scripts', 'lit_enqueue_admin_css' );
-add_action( 'admin_enqueue_scripts', 'lit_enqueue_verify_js' );
+
+// -- execute app scripts
+add_action( 'wp_enqueue_scripts', 'lit_enqueue_app_css' );
+add_action( 'wp_enqueue_scripts', 'lit_enqueue_verify_js' );
+
 
 
 // ================================================================================
@@ -267,7 +268,6 @@ add_action('wp_footer', function ($callback){
     // =================================================================================
     // + WARNING! Following Javascript is rendered client-side, which means is public. +
     // =================================================================================
-    echo '<script src="'.LIT_VERIFY_JS.'"></script>';
     echo '<script>
 
         // -- connect LitProtocol
