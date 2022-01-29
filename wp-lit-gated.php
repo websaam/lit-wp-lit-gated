@@ -106,11 +106,11 @@ function request_headers(){
  * @return { void } 
  */
 function console($title, $log){
-    $debug = DEBUG_GATED_PAGE;
+    $debug = false;
     if( ! $debug ) return;
 
     echo '<div class="lit-debug">';
-    echo '<br>============ '.$title.' ============<br>';
+    echo '<br>============ '.esc_attr($title).' ============<br>';
     echo '<pre><code>';
     print_r($log);
     echo '</code></pre>';
@@ -162,8 +162,8 @@ add_action('wp_head', function(){
 // value into $content
 add_action('wp_footer', function ($callback){
 
-    $content = ob_get_clean();
-
+    $content = sanitize_text_field(htmlentities(ob_get_clean()));
+    
 // =================================================================================
 // +                        ↑↑↑↑↑ Completed Capturing ↑↑↑↑↑                         +
 // =================================================================================
@@ -175,7 +175,7 @@ add_action('wp_footer', function ($callback){
     // +                 No Page Has Been Setup for Lit-Gated Content                 +
     // ================================================================================
     if($settings == null){
-        echo $content;
+        echo html_entity_decode($content);
         exit();
     }
 
@@ -207,7 +207,7 @@ add_action('wp_footer', function ($callback){
     // ==================================================================================
     if( ! in_array($page_url, $locked_list)){
         console('***** Non-Lit-Gated Page *****', $page_url);
-        echo $content;
+        echo html_entity_decode($content);
         exit();
     }
 
@@ -259,7 +259,7 @@ add_action('wp_footer', function ($callback){
             echo "Not Authorized";
         }else{
             // LIT Developers: This is the success condition. Change this to whatever URL you want to redirect to if auth works properly
-            echo $content;
+            echo html_entity_decode($content);
         }
         exit();
     }
