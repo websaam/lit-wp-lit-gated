@@ -117,7 +117,7 @@ function console($title, $log){
 /**
  * JS Style API Fetching
  * @param { String } $url
- * @param { Array } $data
+ * @param { Array } $body
  * @return { Object } response
  *  eg.------------------------
  *   $res = fetch(LIT_JWT_API, [
@@ -125,25 +125,25 @@ function console($title, $log){
  *  ]);
  *  var_dump($res);
  */
-function fetch($url, $data){
-    $ch = curl_init();
+function fetch($url, $body){
 
+    // -- prepare
     $headers = [
         "User-Agent: Lit-Gated Wordpress Plugin",
         "Content-Type: application/json"
     ];
 
-    $json_string = json_encode($data);
+    $data = [
+        'body' => $body,
+        'headers' => $headers,
+    ];
 
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $json_string);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    $data = curl_exec($ch);
-    curl_close($ch);
 
-    return json_decode($data);
+    // -- execute
+    $response = wp_remote_get($url, $data);
+
+    return json_decode($response['body']);
+
 }
 
 // =================================================================================
