@@ -11,21 +11,18 @@
  */
  
 defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
-define('DEBUG_GATED_PAGE', false);
 
 // =================================================================================
 // +                                Define Constants                               +
 // =================================================================================
 
 // -- define libraries
-define("WEB_URL", plugin_dir_url(__FILE__));
-define("DIR_URL", plugin_dir_path(__FILE__));
 define('LIT_ADMIN_HOOK', 'toplevel_page_lit-gated');
 define('LIT_ACC_MODAL_CSS', plugin_dir_url(__FILE__) . 'resources/lit-access-control-conditions-modal-vanilla-js.css');
 define('LIT_ACC_MODAL_JS', plugin_dir_url(__FILE__) . 'resources/lit-access-control-conditions-modal-vanilla-js.js');
 define('LIT_VERIFY_JS', plugin_dir_url(__FILE__) . 'resources/litjssdk.js');
-define('LIT_ADMIN_CSS', WEB_URL . 'wp-lit-gated-admin.css');
-define('LIT_APP_CSS', WEB_URL . 'wp-lit-gated-app.css');
+define('LIT_ADMIN_CSS', plugin_dir_url(__FILE__) . 'wp-lit-gated-admin.css');
+define('LIT_APP_CSS', plugin_dir_url(__FILE__) . 'wp-lit-gated-app.css');
 define('LIT_JWT_API', 'https://jwt-verification-service.lit-protocol.workers.dev');
 define('LIT_JWT_TEST_TOKEN', "eyJhbGciOiJCTFMxMi0zODEiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJMSVQiLCJzdWIiOiIweGRiZDM2MGYzMDA5N2ZiNmQ5MzhkY2M4YjdiNjI4NTRiMzYxNjBiNDUiLCJjaGFpbiI6InBvbHlnb24iLCJpYXQiOjE2NDIwOTU2ODcsImV4cCI6MTY0MjEzODg4NywiYmFzZVVybCI6Im15LWR5bmFtaWMtY29udGVudC1zZXJ2ZXIuY29tIiwicGF0aCI6Ii9jYnJ0MjdrOW5lZnh6endudHYweWgiLCJvcmdJZCI6IiIsInJvbGUiOiIiLCJleHRyYURhdGEiOiIifQ.qT9tHi1jOwQ4ha89Sn-WyvQK9GVjjQrPzRK20IskkmxkQJy_cLLGuCNFgRQiDcNiBgajZ83qITlJye1ZbciNrcJiM-uNs8LuEOfftxegOgj_WY-o17G3ZUtte1ehZoNT");
 
@@ -33,13 +30,13 @@ define('LIT_JWT_TEST_TOKEN', "eyJhbGciOiJCTFMxMi0zODEiLCJ0eXAiOiJKV1QifQ.eyJpc3M
 define('LIT_ICON', plugin_dir_url(__FILE__) . 'assets/favicon-16x16.png');
 define('LIT_MENU_NAME', 'Lit-Gated');
 define('LIT_MENU_SLUG', 'lit-gated');
-define('LIT_MENU_PAGE_CONTENT', DIR_URL . "/setup/menu-page.php");
+define('LIT_MENU_PAGE_CONTENT', plugin_dir_path(__FILE__) . "/setup/menu-page.php");
 define('LIT_MENU_GROUP', 'lit-settings');
 
 // -- define assets
 define('LIT_LOGO', plugin_dir_url(__FILE__) . 'assets/lit-logo.png');
 
-include(DIR_URL . "/setup/Setup.php");
+include(plugin_dir_path(__FILE__) . "/setup/Setup.php");
 
 
 // ================================================================================
@@ -85,7 +82,7 @@ add_action( 'wp_enqueue_scripts', 'lit_enqueue_verify_js' );
  * Request Headers
  * @return { Object } 
  */
-function request_headers(){
+function lwlgf_request_headers(){
 
     $obj = new stdClass();
     $obj->protocol = isset($_SERVER["HTTPS"]) ? 'https://' : 'http://';
@@ -106,7 +103,7 @@ function request_headers(){
  * @param { String } slug
  * @return { void } 
  */
-function console($title, $log){
+function lwlgf_console($title, $log){
     $debug = false;
     if( ! $debug ) return;
 
@@ -129,7 +126,7 @@ function console($title, $log){
  *  ]);
  *  var_dump($res);
  */
-function fetch($url, $body){
+function lwlgf_fetch($url, $body){
 
     // -- prepare
     $headers = [
@@ -188,9 +185,9 @@ add_action('wp_footer', function ($callback){
     $locked_list = array_map(function($data){
         return $data->anchor;
     }, $settings);
-    console("List", $locked_list);
+    lwlgf_console("List", $locked_list);
 
-    $page_url = strtok(request_headers()->url, '?'); // this strips out any URL vars
+    $page_url = strtok(lwlgf_request_headers()->url, '?'); // this strips out any URL vars
 
     // -- Find that particular Lit-Gated entry for this page
     $found_entry = null;
@@ -200,14 +197,14 @@ add_action('wp_footer', function ($callback){
             $found_entry = $data;
         }
     }
-    console("Found Match", $found_entry);
+    lwlgf_console("Found Match", $found_entry);
 
 
     // ==================================================================================
     // +                             Non-Lit-Gated Page                             +
     // ==================================================================================
     if( ! in_array($page_url, $locked_list)){
-        console('***** Non-Lit-Gated Page *****', $page_url);
+        lwlgf_console('***** Non-Lit-Gated Page *****', $page_url);
         echo html_entity_decode($content);
         exit();
     }
@@ -220,7 +217,7 @@ add_action('wp_footer', function ($callback){
     $access_controls = $found_entry->accs;
     $created_at = $found_entry->created_at;
 
-    $resource_id = '{"baseUrl":"'.request_headers()->base_url.'","path":"'.request_headers()->path.'","orgId":"","role":"","extraData":"'.$created_at.'"}';
+    $resource_id = '{"baseUrl":"'.lwlgf_request_headers()->base_url.'","path":"'.lwlgf_request_headers()->path.'","orgId":"","role":"","extraData":"'.$created_at.'"}';
     
     // ==================================================================================
     // +                              BEFORE POST REQUEST                               +
@@ -235,7 +232,7 @@ add_action('wp_footer', function ($callback){
                     <img src="'.LIT_LOGO.'" alt="Lit Protocol" />
                     <h4>This page is Lit-Gated</h4>
                     <div id="lit-msg"></div>
-                    <form action="'.htmlspecialchars(request_headers()->url).'" method="POST" id="lit-form">
+                    <form action="'.htmlspecialchars(lwlgf_request_headers()->url).'" method="POST" id="lit-form">
                         <input type="hidden" id="jwt" name="jwt" value="">
                         <input type="submit" id="lit-submit" value="Unlock Page">
                     </form>
@@ -247,13 +244,13 @@ add_action('wp_footer', function ($callback){
     // +                                AFTER POST REQUEST                               +
     // ==================================================================================
 
-        $res = fetch(LIT_JWT_API, ["jwt" => sanitize_text_field($_POST["jwt"])]);
+        $res = lwlgf_fetch(LIT_JWT_API, ["jwt" => sanitize_text_field($_POST["jwt"])]);
 
         // LIT Developers: change this to the baseUrl you are authenticating, path, and other params in the payload
         // so that they match the resourceId that you used when you saved the signing condition to the Lit Protocol
         if($res->verified == false || 
             $res->payload->baseUrl !== $_SERVER["HTTP_HOST"] ||
-            $res->payload->path !== request_headers()->path ||
+            $res->payload->path !== lwlgf_request_headers()->path ||
             $res->payload->orgId !== '' ||
             $res->payload->role !== '' ||
             $res->payload->extraData !== $created_at){

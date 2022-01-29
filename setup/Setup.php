@@ -3,7 +3,7 @@
 /**
  * Class for registering a new menu page
  */
-class SetupMenu{
+class lwlgf_SetupMenu{
 
     /**
      * Properties
@@ -98,7 +98,7 @@ class SetupMenu{
     }
 }
 
-new SetupMenu([
+new lwlgf_SetupMenu([
     "menu_name" => LIT_MENU_NAME,
     "menu_slug" => LIT_MENU_SLUG,
     "menu_icon" => LIT_ICON,
