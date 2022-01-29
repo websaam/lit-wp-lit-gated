@@ -30,7 +30,7 @@ define('LIT_JWT_API', 'https://jwt-verification-service.lit-protocol.workers.dev
 define('LIT_JWT_TEST_TOKEN', "eyJhbGciOiJCTFMxMi0zODEiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJMSVQiLCJzdWIiOiIweGRiZDM2MGYzMDA5N2ZiNmQ5MzhkY2M4YjdiNjI4NTRiMzYxNjBiNDUiLCJjaGFpbiI6InBvbHlnb24iLCJpYXQiOjE2NDIwOTU2ODcsImV4cCI6MTY0MjEzODg4NywiYmFzZVVybCI6Im15LWR5bmFtaWMtY29udGVudC1zZXJ2ZXIuY29tIiwicGF0aCI6Ii9jYnJ0MjdrOW5lZnh6endudHYweWgiLCJvcmdJZCI6IiIsInJvbGUiOiIiLCJleHRyYURhdGEiOiIifQ.qT9tHi1jOwQ4ha89Sn-WyvQK9GVjjQrPzRK20IskkmxkQJy_cLLGuCNFgRQiDcNiBgajZ83qITlJye1ZbciNrcJiM-uNs8LuEOfftxegOgj_WY-o17G3ZUtte1ehZoNT");
 
 // -- define admin menu page
-define('LIT_ICON', site_url() . '/wp-content/plugins/wp-lit-gated/assets/favicon-16x16.png');
+define('LIT_ICON', plugin_dir_url(__FILE__) . 'assets/favicon-16x16.png');
 define('LIT_MENU_NAME', 'Lit-Gated');
 define('LIT_MENU_SLUG', 'lit-gated');
 define('LIT_MENU_PAGE_CONTENT', DIR_URL . "/setup/menu-page.php");
