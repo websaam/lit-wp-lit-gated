@@ -58,7 +58,6 @@ function lit_enqueue_admin_css($hook) {
 function lit_enqueue_verify_js($hook) {
     wp_enqueue_script( 'lit-verify-js', LIT_VERIFY_JS);
 }
-
 // --- Load script for front-end
 function lit_enqueue_app_css($hook) {
     wp_enqueue_style( 'lit-app-css', LIT_APP_CSS);
@@ -67,6 +66,7 @@ function lit_enqueue_app_css($hook) {
 add_action( 'admin_enqueue_scripts', 'lit_enqueue_acc_modal_css' );
 add_action( 'admin_enqueue_scripts', 'lit_enqueue_acc_modal_js' );
 add_action( 'admin_enqueue_scripts', 'lit_enqueue_admin_css' );
+add_action( 'admin_enqueue_scripts', 'lit_enqueue_verify_js' );
 
 // -- execute app scripts
 add_action( 'wp_enqueue_scripts', 'lit_enqueue_app_css' );
