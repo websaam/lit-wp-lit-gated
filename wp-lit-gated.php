@@ -246,7 +246,7 @@ add_action('wp_footer', function ($callback){
     // +                                AFTER POST REQUEST                               +
     // ==================================================================================
 
-        $res = fetch(LIT_JWT_API, ["jwt" => $_POST["jwt"]]);
+        $res = fetch(LIT_JWT_API, ["jwt" => sanitize_text_field($_POST["jwt"])]);
 
         // LIT Developers: change this to the baseUrl you are authenticating, path, and other params in the payload
         // so that they match the resourceId that you used when you saved the signing condition to the Lit Protocol
