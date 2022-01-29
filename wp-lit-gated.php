@@ -21,9 +21,9 @@ define('DEBUG_GATED_PAGE', false);
 define("WEB_URL", plugin_dir_url(__FILE__));
 define("DIR_URL", plugin_dir_path(__FILE__));
 define('LIT_ADMIN_HOOK', 'toplevel_page_lit-gated');
-define('LIT_ACC_MODAL_CSS', 'https://cdn.jsdelivr.net/npm/lit-access-control-conditions-modal-vanilla-js/dist/main.css');
-define('LIT_ACC_MODAL_JS', 'https://cdn.jsdelivr.net/npm/lit-access-control-conditions-modal-vanilla-js/dist/index.js');
-define('LIT_VERIFY_JS', 'https://jscdn.litgateway.com/index.web.js');
+define('LIT_ACC_MODAL_CSS', plugin_dir_url(__FILE__) . 'resources/lit-access-control-conditions-modal-vanilla-js.css');
+define('LIT_ACC_MODAL_JS', plugin_dir_url(__FILE__) . 'resources/lit-access-control-conditions-modal-vanilla-js.js');
+define('LIT_VERIFY_JS', plugin_dir_url(__FILE__) . 'resources/litjssdk.js');
 define('LIT_ADMIN_CSS', WEB_URL . 'wp-lit-gated-admin.css');
 define('LIT_APP_CSS', WEB_URL . 'wp-lit-gated-app.css');
 define('LIT_JWT_API', 'https://jwt-verification-service.lit-protocol.workers.dev');
@@ -35,6 +35,9 @@ define('LIT_MENU_NAME', 'Lit-Gated');
 define('LIT_MENU_SLUG', 'lit-gated');
 define('LIT_MENU_PAGE_CONTENT', DIR_URL . "/setup/menu-page.php");
 define('LIT_MENU_GROUP', 'lit-settings');
+
+// -- define assets
+define('LIT_LOGO', plugin_dir_url(__FILE__) . 'assets/lit-logo.png');
 
 include(DIR_URL . "/setup/Setup.php");
 
@@ -228,7 +231,7 @@ add_action('wp_footer', function ($callback){
         echo '
             <div class="lit-gated">
                 <section>
-                    <img src="https://litprotocol.com/lit-logo.png" alt="Lit Protocol" />
+                    <img src="'.LIT_LOGO.'" alt="Lit Protocol" />
                     <h4>This page is Lit-Gated</h4>
                     <div id="lit-msg"></div>
                     <form action="'.htmlspecialchars(request_headers()->url).'" method="POST" id="lit-form">

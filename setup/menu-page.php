@@ -77,7 +77,7 @@ function get_snippet($created_at, $accs = '', $path = '', $signed = false, $with
     <!-- logo -->
     <div class="lit-logo">
         <section>
-            <img src="https://litprotocol.com/lit-logo.png"/>
+            <img src="<?php echo LIT_LOGO ;?>"/>
             <h1>Lit Protocol Settings</h1>
         </section>
     </div><!-- ...logo -->

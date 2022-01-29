@@ -6,6 +6,13 @@ Simply download this repo [here](https://github.com/LIT-Protocol/lit-wp-lit-gate
 
 You must disable the "AMP" Wordpress plugin or else the lit-gating will not work on mobile.
 
+# Download/Update resources
+
+```bash
+chmod +x ./download.sh
+./download.sh
+```
+
 # Demo
 
 ![](https://assets.wzac.io/lit-protocol/lit-wp-lit-gated-1.png)
