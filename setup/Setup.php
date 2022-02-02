@@ -94,7 +94,7 @@ class lwlgf_SetupMenu{
      */
     function field_html(){
         $text = get_option( $this->option_name );
-        echo '<input type="text" id="'.$this->option_name.'" name="'.$this->option_name.'" value="'.esc_attr( $text ).'" />';
+        echo '<input type="text" id="'.esc_attr($this->option_name).'" name="'.esc_attr($this->option_name).'" value="'.esc_attr( $text ).'" />';
     }
 }
 
