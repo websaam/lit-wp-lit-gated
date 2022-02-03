@@ -15,5 +15,3 @@ Gate your content based on blockchain conditions like NFT ownership.
 == Description ==
 
 Gate Wordpress pages based on blockchain conditions like NFT ownership or DAO membership using Lit Protocol.  Supports Ethereum and most EVM chains.
-
-More info and source code is here: [https://github.com/LIT-Protocol/lit-wp-lit-gated](https://github.com/LIT-Protocol/lit-wp-lit-gated)
