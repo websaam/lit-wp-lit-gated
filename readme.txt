@@ -10,3 +10,8 @@ License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
  
 Gate your content based on blockchain conditions like NFT ownership.
+
+
+== Description ==
+
+Gate Wordpress pages based on blockchain conditions like NFT ownership or DAO membership using Lit Protocol.  Supports Ethereum and most EVM chains.

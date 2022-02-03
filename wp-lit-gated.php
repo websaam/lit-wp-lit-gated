@@ -5,8 +5,8 @@
  * Plugin URI: https://litprotocol.com
  * Description: Token-gate your post/page using <a href="https://litprotocol.com">Lit-Protocol</a>
  * Version: 0.0.1
- * Author: WebSaam.com
- * Author URI:  https://websaam.com
+ * Author: LitProtocol.com
+ * Author URI:  https://litprotocol.com
  * License: GPLv3
  */
  
