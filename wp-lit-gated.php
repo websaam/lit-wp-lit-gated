@@ -174,7 +174,7 @@ add_action('wp_footer', function ($callback){
     // ================================================================================
     if($settings == null){
         echo html_entity_decode($content);
-        exit();
+        // exit();
     }
 
     // =================================================================================
@@ -206,7 +206,8 @@ add_action('wp_footer', function ($callback){
     if( ! in_array($page_url, $locked_list)){
         lwlgf_console('***** Non-Lit-Gated Page *****', $page_url);
         echo html_entity_decode($content);
-        exit();
+        // exit();
+        return;
     }
 
     // ==================================================================================
@@ -222,10 +223,11 @@ add_action('wp_footer', function ($callback){
     // ==================================================================================
     // +                              BEFORE POST REQUEST                               +
     // ==================================================================================
-    if(empty($_POST)){
+    if(empty($_POST) && $found_entry != null){
         if( ! $found_entry->signed){
             echo '<b>This page is not signed yet. You will not be able to unlock this page even if you\'ve met the requirements.</b>';
         }
+
         echo '
             <div class="lit-gated">
                 <section>
@@ -259,7 +261,7 @@ add_action('wp_footer', function ($callback){
             // LIT Developers: This is the success condition. Change this to whatever URL you want to redirect to if auth works properly
             echo html_entity_decode($content);
         }
-        exit();
+        // exit();
     }
     
     // =================================================================================
@@ -325,6 +327,6 @@ add_action('wp_footer', function ($callback){
 
         })();
     </script>';
-    exit();
+    // exit();
 
 });
