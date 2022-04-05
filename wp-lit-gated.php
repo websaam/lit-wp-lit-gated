@@ -141,7 +141,7 @@ function lwlgf_fetch($url, $body){
 
     // -- execute
     $response = wp_remote_get($url, $data);
-
+    
     return json_decode($response['body']);
 
 }
@@ -245,6 +245,8 @@ add_action('wp_footer', function ($callback){
     // +                                AFTER POST REQUEST                               +
     // ==================================================================================
 
+        add_filter( 'http_request_timeout', function( $timeout ) { return 60; });
+
         $res = lwlgf_fetch(LIT_JWT_API, ["jwt" => sanitize_text_field($_POST["jwt"])]);
 
         // LIT Developers: change this to the baseUrl you are authenticating, path, and other params in the payload
@@ -279,11 +281,13 @@ add_action('wp_footer', function ($callback){
             const form = document.getElementById("lit-form");
 
             // -- prepare args for jwt
-            const accessControlConditions = '.$access_controls.';
+            const conditionObject = '.$access_controls.';
             const resourceId = '.$resource_id.';
+            const accessControlConditions = conditionObject.accessControlConditions ?? conditionObject;
             console.log(resourceId);
             console.log("________");
-            console.log(accessControlConditions);
+            console.log("conditionObject:", conditionObject);
+            console.log("accessControlConditions:", accessControlConditions);
             console.log("RESOURCE_ID:", resourceId);
             const readable = await LitJsSdk.humanizeAccessControlConditions({accessControlConditions});
             

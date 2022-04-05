@@ -380,8 +380,25 @@ const handleHumanised = () => {
 
     asyncForEach([...fields], async (field) => {
         console.log(field.nextElementSibling);
-        const accessControlConditions = JSON.parse(field.nextElementSibling.value);
-        const readable = await LitJsSdk.humanizeAccessControlConditions({accessControlConditions});
+        const conditionObject = JSON.parse(field.nextElementSibling.value);
+
+        console.log("conditionObject.accessControlConditions:", conditionObject.accessControlConditions);
+
+        let readable;
+
+        try{
+            readable = await LitJsSdk.humanizeAccessControlConditions({ accessControlConditions: conditionObject});
+        }catch(e) {
+            console.warn("Humanised: V1 method failed. Try V2 method");
+        }
+
+        try{
+            readable = await LitJsSdk.humanizeAccessControlConditions({ accessControlConditions: conditionObject.accessControlConditions});
+        }catch(e) {
+            console.warn("Humanised: V2 method failed.");
+        }
+
+        console.log("readable:", readable)
         field.innerText = readable;
     });
 }
@@ -517,7 +534,10 @@ const handleBtnsSign = () => {
             return;
         }
 
-        const accessControlConditions = JSON.parse(accs_textarea.value);
+        const conditionsObject = JSON.parse(accs_textarea.value);
+
+        const accessControlConditions = conditionsObject.accessControlConditions ?? conditionsObject;
+        conditionsObject.permanent = false;
 
         const href = getHref(link_textarea.value);
         const { base_url, path } = getURLParts(href);
@@ -535,11 +555,13 @@ const handleBtnsSign = () => {
         console.log("RESOURCE_ID:", resourceId);
 
         // -- start signing
+        console.log("Signing...");
         const sign = await litNodeClient.saveSigningCondition({ 
             accessControlConditions, 
             resourceId,
             chain, 
-            authSig, 
+            authSig,
+            permanent: false,
         });
 
         if(! sign ){
