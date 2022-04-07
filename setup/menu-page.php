@@ -537,7 +537,7 @@ const handleBtnsSign = () => {
         const conditionsObject = JSON.parse(accs_textarea.value);
 
         const accessControlConditions = conditionsObject.accessControlConditions ?? conditionsObject;
-        conditionsObject.permanent = false;
+        // conditionsObject.permanent = false;
 
         const href = getHref(link_textarea.value);
         const { base_url, path } = getURLParts(href);
@@ -561,7 +561,7 @@ const handleBtnsSign = () => {
             resourceId,
             chain, 
             authSig,
-            permanent: false,
+            permanent: conditionsObject.permanent,
         });
 
         if(! sign ){

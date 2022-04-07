@@ -62,6 +62,7 @@ function lit_enqueue_verify_js($hook) {
 function lit_enqueue_app_css($hook) {
     wp_enqueue_style( 'lit-app-css', LIT_APP_CSS);
 }
+
 // -- execute admin scripts
 add_action( 'admin_enqueue_scripts', 'lit_enqueue_acc_modal_css' );
 add_action( 'admin_enqueue_scripts', 'lit_enqueue_acc_modal_js' );
@@ -164,6 +165,15 @@ add_action('wp_footer', function ($callback){
 // =================================================================================
 // +                        ↑↑↑↑↑ Completed Capturing ↑↑↑↑↑                         +
 // =================================================================================
+
+    //
+    //  Check if it's elementor editing mode
+    //
+    $isElementorEditingMode = strpos($_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'], 'elementor-preview=1') !== false;
+
+    if($isElementorEditingMode) {
+        echo html_entity_decode($content);
+    }
     
     // -- prepare admin page data
     $settings = json_decode(base64_decode(get_option('lit-settings')));
