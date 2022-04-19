@@ -10,21 +10,61 @@ require_once ABSPATH . "wp-includes/class-wp-editor.php";
 _WP_Editors::wp_link_dialog(); 
 
 /**
+ * Get row HTML
+ * @param { String } $anchor/$path
+ * @return { String } HTML
+ */
+function get_link_row($anchor = ''){
+    return '<div class="lit-btn-select-link-row">
+                <div class="lit-btn-select-link lit-btn-secondary">Select Link</div>
+                <textarea class="lit-selected-link">'.$anchor.'</textarea>
+            </div>';
+}
+
+/**
+ * Get "Select Link" section
+ * @param { String } $paths : the resource paths you want to sign
+ * @return { String } HTML
+ */
+function get_links_section($paths){
+    
+    $link_content = '';
+
+    // -- basically if array is 0
+    if( $paths == null){
+        $link_content = get_link_row();
+        return $link_content;
+    }
+
+    // -- else loop through array
+    foreach($paths as $path){
+        $link_content .= get_link_row($path->anchor);
+    }
+
+    $link_content .= get_link_row();
+
+    return $link_content;
+}
+
+/**
  * Get the row snippet
  * @param { String } $created_at : timestamp that this data was created at
  * @param { String } $accs : access control conditions in a readable format
- * @param { String } $path : the resource path you want to sign
+ * @param { String } $paths : the resource paths you want to sign
  * @param { Boolean } $signed : if this row a signed resource
  * @param { Boolean } withoutWrapper : Including the outer div or not
  * @return { String } HTML 
  */
-function get_snippet($created_at, $accs = '', $path = '', $signed = false, $withoutWrapper = false){
+function get_snippet($created_at, $accs = '', $paths = '', $signed = false, $withoutWrapper = false){
 
     $signed_class = $signed ? 'signed' : '';
     $wrapper_start = $withoutWrapper ? '' : '<div data-created-at="'.$created_at.'" class="lit-table-row '.$signed_class.'">';
     $wrapper_end = $withoutWrapper ? '' : '</div>';
 
     return $wrapper_start . '
+
+        <!-- Progress bar -->
+        <div class="lit-progress-bar"></div>
 
         <!-- Lit Signed -->
         <div class="lit-signed">
@@ -60,8 +100,9 @@ function get_snippet($created_at, $accs = '', $path = '', $signed = false, $with
 
         <!-- Row Select Link -->
         <div class="lit-table-col lit-table-col__path">
-            <div class="lit-btn-select-link lit-btn-secondary">Select Link</div>
-            <textarea class="lit-selected-link">'.$path.'</textarea>
+            <div class="lit-select-links-container">
+                '. get_links_section($paths) .' 
+            </div>
         </div>
         
     ' . $wrapper_end;
@@ -110,8 +151,20 @@ function get_snippet($created_at, $accs = '', $path = '', $signed = false, $with
                     <!-- ===== PHP FOR LOOP CONTENT BEGINS ===== -->
                     <?php
                     if(count($settings) > 0){
+
+                        echo '<div class="lit-debug">';
+
+                        // ----- (DEBUG) DELETE THIS AFTER
+                        // echo '<br>============ Data ============<br>';
+                        // echo '<pre><code style="font-size:10px;">';
+                        // print_r($settings);
+                        // echo '</code></pre>';
+                        // ----- ...(DEBUG) DELETE THIS AFTER
+                        
+                        echo '</div>';
+
                         foreach($settings as $i=>$setting){
-                            echo get_snippet($setting->created_at, $setting->accs, $setting->anchor, $setting->signed);
+                            echo get_snippet($setting->created_at, $setting->accs, $setting->paths, $setting->signed);
                         }
                     }
                     ;?>
@@ -246,32 +299,60 @@ const compressedData = () => {
     var inputs = document.getElementsByClassName('input-accs');
     var paths = document.getElementsByClassName('lit-selected-link');
     var rows = [...document.getElementsByClassName('lit-table-row')].filter((e) => !e.classList.contains('lit-table-header'));
+    var containers = document.getElementsByClassName('lit-select-links-container');
+
+    console.log("Containers:", containers);
 
     var bucket = [];
 
     // for each row
-    [...inputs].forEach((_, i) => {
+    [...containers].forEach((_, i) => {
+
         console.log(`(${i}) -----`);
+
+        var new_rows = containers[i].querySelectorAll('.lit-btn-select-link-row');
+
+        const _paths = [];
+
+        [...new_rows].forEach((_path) => {
+            var _value = _path.querySelector('.lit-btn-secondary').innerText;
+
+            if(_value != 'Select Link'){
+
+                const { base_url, path } = getURLParts(_value);
+
+                _paths.push({
+                    anchor: _value,
+                    base_url,
+                    path,
+                });
+            }
+        });
+
+        // console.log("PATHS:", _paths);
+
         const input = inputs[i];
         const anchor_tag = paths[i];
         const current_row = rows[i];
         
-        const href = getHref(anchor_tag.value);
-        const { base_url, path } = getURLParts(href);
+        // const href = getHref(anchor_tag.value);
+        // const { base_url, path } = getURLParts(href);
         const signed = current_row.classList.contains('signed');
         const created_at = current_row.getAttribute('data-created-at');
         
-        console.log("🔥 anchor:", href);
-        console.log("🔥 base_url:", base_url);
-        console.log("🔥 path:", path);
+        console.log("🔥 paths:", _paths);
+        // console.log("🔥 anchor:", href);
+        // console.log("🔥 base_url:", base_url);
+        // console.log("🔥 path:", path);
         console.log("🔥 signed:", signed);
         console.log("🔥 created_at:", created_at);
 
         var obj = {};
         obj.accs = input.value;
-        obj.base_url = base_url;
-        obj.path = path;
-        obj.anchor = href;
+        obj.paths = _paths;
+        // obj.base_url = base_url;
+        // obj.path = path;
+        // obj.anchor = href;
         obj.signed = signed;
         obj.created_at = created_at;
 
@@ -408,22 +489,33 @@ const handleHumanised = () => {
 // @return { void }
 //
 const handleBtnsSelectLink = () => {
+    
     const btns = document.getElementsByClassName('lit-btn-select-link');
 
-    const onSubmit = () => handleBtnsSelectLinkInnerText();
+    const onSubmit = (bool) => handleBtnsSelectLinkInnerText({addSelectLinkButton: bool});
 
     const handleClick = (e) => {
-        const targetRow = e.target.parentElement.parentElement;
+
+        console.warn("..handleBtnsSelectLink");
+
+        const isSelectLink = e.target.innerText == 'Select Link';
+
+        // const targetRow = e.target.parentElement.parentElement;
         const textarea = e.target.nextElementSibling;
+        textarea.setAttribute('id', 'js-temp-insert');
+
+        // console.log("targetRow:", targetRow);
+        console.log("textarea:", textarea);
         
         // clear textarea
         textarea.value = '';
         
-        const textarea_id = textarea.getAttribute('id');;
+        const textarea_id = textarea.getAttribute('id');
         wpLink.open(textarea_id);
 
         var btnSubmit = document.getElementById('wp-link-submit');
-        btnSubmit.addEventListener('click', onSubmit);
+
+        btnSubmit.addEventListener('click', () => onSubmit(isSelectLink));
 
         setTimeout(() => {
             highlightSignedRowsOnSearchList();
@@ -436,16 +528,70 @@ const handleBtnsSelectLink = () => {
 }
 
 //
+// Create and return `Select Link` button
+// @return { HTMLElement }
+//
+const createSelectLinkButton = () => {
+
+    const row = Object.assign(document.createElement('div'), {
+        classList: 'lit-btn-select-link-row',
+    });
+
+    const btnSelectLink = Object.assign(document.createElement('div'), {
+        classList: 'lit-btn-select-link lit-btn-secondary',
+        innerText: 'Select Link',
+    });
+
+    const textArea = Object.assign(document.createElement('textarea'), {
+        classList: 'lit-selected-link',
+    });
+
+    row.appendChild(btnSelectLink)
+    row.appendChild(textArea)
+
+    setTimeout(() => {
+        handleBtnsSelectLink();
+    }, 500)
+
+    return row;
+}
+
+//
 // Handle Selected Link Text
+// @param { Object } options
+// @param { Boolean } options.addSelectLinkButton
 // @return { void } 
 //
-const handleBtnsSelectLinkInnerText = () => {
+const handleBtnsSelectLinkInnerText = (options) => {
+    
+    console.warn("...handleBtnsSelectLinkInnerText");
 
-    [...document.getElementsByClassName('lit-selected-link')].forEach((textarea) => {
+    handleSelectLinkStyle();
+
+    [...document.getElementsByClassName('lit-selected-link')].forEach((textarea, i) => {
+
+        console.log(`${i}: textarea:`, textarea);
+        
         if( textarea.value.length > 1){
             const btn = textarea.previousElementSibling;
             btn.innerHTML = getHref(textarea.value);
         }
+
+        // -- This add a new "Select Link" button
+        if(options?.addSelectLinkButton && textarea?.getAttribute('id') != null){
+
+            // -- remove 'js-temp-insert' id
+            textarea?.removeAttribute('id');
+
+            // -- add new 'Select Link' button
+            let container = textarea.parentElement.parentElement;
+            console.log("Container:", container);
+
+            const row = createSelectLinkButton();
+    
+            container.appendChild(row)
+        }
+
     });
 }
 
@@ -471,16 +617,16 @@ const handleRowsIndex = () => {
     
     [...rows].forEach((row, i) => {
 
-        // -- validate
+        // -- validate if it's NOT header
         if(row.classList.contains('lit-table-header')) return;
         
         // -- prepare
         let id = row.querySelector('.lit-table-col__id > span');
-        let selected_link = row.querySelector('.lit-selected-link');
+        // let selected_link = row.querySelector('.lit-selected-link');
         
         // -- excute
         id.innerText = i;
-        selected_link.setAttribute('id', 'lit-selected-link-' + i);
+        // selected_link.setAttribute('id', 'lit-selected-link-' + i);
     });
 }
 
@@ -489,85 +635,112 @@ const handleRowsIndex = () => {
 // @return { void } 
 //
 const handleBtnsSign = () => {
+
     var btns = document.getElementsByClassName('lit-btn-sign');
 
     const handleClick = async (e) => {
 
+        console.warn("handleBtnsSign");
+
         const target_row = e.target.parentElement.parentElement;
+        const progress_bar = target_row.querySelector('.lit-progress-bar');
         const accs_textarea = target_row.querySelector('.input-accs');
         const link_textarea = target_row.querySelector('.lit-selected-link');
         const accs = target_row.querySelector('.lit-humanised').innerText;
-        const url = target_row.querySelector('.lit-btn-select-link').innerText;
+        // const url = target_row.querySelector('.lit-btn-select-link').innerText;
+        let rows = target_row.querySelectorAll('.lit-btn-select-link-row');
+        rows = [...rows].filter((row) => row.innerText != 'Select Link');
 
-        // -- validate
-        if(accs_textarea.value == null || accs_textarea.value == '' || accs_textarea.value == undefined || accs_textarea.value.length < 5){
-            console.log("Error");
-            accs_textarea.classList.add('error');
-            setTimeout(() => accs_textarea.classList.remove('error'), 2000);
-            return;
-        }
+        console.log("target_row:", target_row);
+        console.log("accs_textarea:", accs_textarea);
+        console.log("link_textarea:", link_textarea);
+        console.log("accs:", accs);
+        // console.log("url:", url);
 
-        if(link_textarea.value == null || link_textarea.value == '' || link_textarea.value == undefined || link_textarea.value.length < 5){
-            console.log("Error");
-            link_textarea.previousElementSibling.classList.add('error');
-            setTimeout(() => link_textarea.previousElementSibling.classList.remove('error'), 2000);
-            return;
-        }
+        console.log("rows:", rows);
         
-        // -- prompt message
-        // const message = `WARNING! Are you sure you want to sign this resource?\nOnce it's signed it cannot be changed or deleted forever.\n\n${accs}\n${url}\n\n \n`;
-        // const confirmed = confirm(message) == true ? true : false;
-        // if(! confirmed ) return;
-        
-        // -- prepare resource id
-        const chain = "ethereum";
-        let authSig;
-        try {
-            authSig = await LitJsSdk.checkAndSignAuthMessage({chain: chain});
-        } catch (error) {
-            console.log("Error:", error);
-            if (error.errorCode === "no_wallet") {
-                alert("Please install an Ethereum wallet to use this feature.  You can do this by installing MetaMask from https://metamask.io/");
-            } else {
-                alert("An unknown error occurred when trying to get a signature from your wallet.  You can find it in the console.  Please email support@litprotocol.com with a bug report");
+        await asyncForEach(rows, async (row, i) => {
+            const url = row.querySelector('.lit-btn-secondary').innerText;
+
+            console.warn(`====== SIGNING: ${i}: url:`, url, " ======");
+    
+            // -- validate
+            if(accs_textarea.value == null || accs_textarea.value == '' || accs_textarea.value == undefined || accs_textarea.value.length < 5){
+                console.log("Error");
+                accs_textarea.classList.add('error');
+                setTimeout(() => accs_textarea.classList.remove('error'), 2000);
+                return;
             }
-            return;
-        }
-
-        const conditionsObject = JSON.parse(accs_textarea.value);
-
-        const accessControlConditions = conditionsObject.accessControlConditions ?? conditionsObject;
-        // conditionsObject.permanent = false;
-
-        const href = getHref(link_textarea.value);
-        const { base_url, path } = getURLParts(href);
-        
-        const timestamp = target_row.getAttribute('data-created-at');
-
-        const resourceId = {
-            baseUrl: base_url,
-            path,
-            orgId: "",
-            role: "",
-            extraData: timestamp,
-        };
-
-        console.log("RESOURCE_ID:", resourceId);
-
-        // -- start signing
-        console.log("Signing...");
-        const sign = await litNodeClient.saveSigningCondition({ 
-            accessControlConditions, 
-            resourceId,
-            chain, 
-            authSig,
-            permanent: conditionsObject.permanent,
+    
+            if(link_textarea.value == null || link_textarea.value == '' || link_textarea.value == undefined || link_textarea.value.length < 5){
+                console.log("Error");
+                link_textarea.previousElementSibling.classList.add('error');
+                setTimeout(() => link_textarea.previousElementSibling.classList.remove('error'), 2000);
+                return;
+            }
+            
+            // -- prompt message
+            // const message = `WARNING! Are you sure you want to sign this resource?\nOnce it's signed it cannot be changed or deleted forever.\n\n${accs}\n${url}\n\n \n`;
+            // const confirmed = confirm(message) == true ? true : false;
+            // if(! confirmed ) return;
+            
+            // -- prepare resource id
+            const chain = "ethereum";
+            let authSig;
+            try {
+                authSig = await LitJsSdk.checkAndSignAuthMessage({chain: chain});
+            } catch (error) {
+                console.log("Error:", error);
+                if (error.errorCode === "no_wallet") {
+                    alert("Please install an Ethereum wallet to use this feature.  You can do this by installing MetaMask from https://metamask.io/");
+                } else {
+                    alert("An unknown error occurred when trying to get a signature from your wallet.  You can find it in the console.  Please email support@litprotocol.com with a bug report");
+                }
+                return;
+            }
+    
+            const conditionsObject = JSON.parse(accs_textarea.value);
+    
+            const accessControlConditions = conditionsObject.accessControlConditions ?? conditionsObject;
+            conditionsObject.permanent = false;
+    
+            // const href = getHref(link_textarea.value);
+            const { base_url, path } = getURLParts(url);
+            
+            const timestamp = target_row.getAttribute('data-created-at');
+    
+            const resourceId = {
+                baseUrl: base_url,
+                path,
+                orgId: "",
+                role: "",
+                extraData: timestamp,
+            };
+    
+            console.log("RESOURCE_ID:", resourceId);
+            console.log("accessControlConditions:", accessControlConditions);
+    
+            // -- start signing
+            console.log("Signing...");
+            const litNodeClient = new LitJsSdk.LitNodeClient();
+            await litNodeClient.connect();
+            const sign = await litNodeClient.saveSigningCondition({ 
+                accessControlConditions, 
+                resourceId,
+                chain, 
+                authSig,
+                permanent: conditionsObject.permanent,
+            });
+    
+            if(! sign ){
+                alert("Something went wrong when signing this resource.");
+                return;
+            }
+            row.classList.add('locked');
+            progress_bar.style.width = ((i+1) / rows.length) * 100 + '%';    
         });
 
-        if(! sign ){
-            alert("Something went wrong when signing this resource.");
-            return;
-        }
+        await new Promise(r => setTimeout(r, 1000));
 
         target_row.classList.add('signed');
         const btnSubmit = document.getElementById('btn-lit-submit');
@@ -631,8 +804,13 @@ const handleRowsToggle = () => {
 //
 const highlightSignedRowsOnSearchList = () => {
 
+    console.warn("highlightSignedRowsOnSearchList:", highlightSignedRowsOnSearchList)
+
     var search_results = [...document.getElementById('most-recent-results').querySelectorAll('input')];
     var signed_results = [...document.getElementsByClassName('signed')].map((e) => e.querySelector('.lit-selected-link').innerText);
+
+    console.log("search_results:", search_results);
+    console.log("signed_results:", signed_results);
 
     search_results.forEach((result) => {
         if(signed_results.includes(result.value)){
@@ -673,6 +851,52 @@ const handleEdits = () => {
     });
 }
 
+// 
+// Get 'Delete' button
+// @return { HTMLElement } e
+//
+const createDeleteButton = () => {
+    const btn = Object.assign(document.createElement('div'), {
+        classList: 'js-select-link__delete',
+        innerHTML: '<svg fill="#2c1272" xmlns="http://www.w3.org/2000/svg"  viewBox="0 0 16 16" width="16px" height="16px"><path d="M 6.496094 1 C 5.675781 1 5 1.675781 5 2.496094 L 5 3 L 2 3 L 2 4 L 3 4 L 3 12.5 C 3 13.328125 3.671875 14 4.5 14 L 10.5 14 C 11.328125 14 12 13.328125 12 12.5 L 12 4 L 13 4 L 13 3 L 10 3 L 10 2.496094 C 10 1.675781 9.324219 1 8.503906 1 Z M 6.496094 2 L 8.503906 2 C 8.785156 2 9 2.214844 9 2.496094 L 9 3 L 6 3 L 6 2.496094 C 6 2.214844 6.214844 2 6.496094 2 Z M 5 5 L 6 5 L 6 12 L 5 12 Z M 7 5 L 8 5 L 8 12 L 7 12 Z M 9 5 L 10 5 L 10 12 L 9 12 Z"/></svg>',
+    });
+
+    // -- add event handler
+    btn.addEventListener('click', (e) => {
+        console.log(e.target.parentElement.remove());
+    });
+
+    return btn;
+}
+
+// 
+// Handle 'Select Link' Style
+// 
+const handleSelectLinkStyle = () =>{
+
+    console.warn("handleSelectLinkStyle");
+
+    setTimeout(() => {
+        [...document.querySelectorAll('.lit-select-links-container .lit-btn-secondary')].forEach((item) => {
+            
+            if(item.innerText == 'Select Link'){
+                item.classList.add('js-select-link');
+            }else{
+                item.classList.remove('js-select-link');
+
+                // -- if delete button doesn't exist already
+                if( item.parentElement.querySelector('.js-select-link__delete') == null){
+                    const btnDelete = createDeleteButton();
+                    item.parentElement.appendChild(btnDelete);
+                }
+
+            }
+        
+        });
+    }, 50)
+
+}
+
 
 // -------------------- Entry Point -------------------- //
 (() => {
@@ -690,6 +914,7 @@ const handleEdits = () => {
         handleBtnsSelectLinkInnerText();
         handleOnAccsInputChange();
         handleBtnsSign();
+        // handleSelectLinkStyle();
     });
     handleRowDeletion();
     handleBtnsCreateRequirements();
@@ -701,6 +926,7 @@ const handleEdits = () => {
     handleBtnsSign();
     handleRowsToggle();
     handleEdits();
+    // handleSelectLinkStyle();
 
 })();
 

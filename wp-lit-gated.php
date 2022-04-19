@@ -4,7 +4,7 @@
  * Plugin Name: Token / NFT / Blockchain Page Gating
  * Plugin URI: https://litprotocol.com
  * Description: Token-gate your post/page using <a href="https://litprotocol.com">Lit-Protocol</a>
- * Version: 0.0.1
+ * Version: 0.0.2
  * Author: LitProtocol.com
  * Author URI:  https://litprotocol.com
  * License: GPLv3
@@ -192,20 +192,33 @@ add_action('wp_footer', function ($callback){
     
     // -- A list of pages that's Lit-Gated
     $locked_list = array_map(function($data){
-        return $data->anchor;
+        return array_map(function($path){
+            return $path->anchor;
+        }, $data->paths);
     }, $settings);
+
+    $locked_list = array_merge(...$locked_list);
+
     lwlgf_console("List", $locked_list);
 
     $page_url = strtok(lwlgf_request_headers()->url, '?'); // this strips out any URL vars
+    // lwlgf_console("Path URL", $page_url);
 
     // -- Find that particular Lit-Gated entry for this page
     $found_entry = null;
     for($i = 0; $i < count($settings); $i++){
+        
         $data = $settings[$i];
-        if($data->anchor == $page_url){
-            $found_entry = $data;
+
+        // lwlgf_console("Number: $i", $data);
+
+        foreach($data->paths as $path){
+            if($path->anchor == $page_url){
+                $found_entry = $data;
+            }
         }
     }
+
     lwlgf_console("Found Match", $found_entry);
 
 
@@ -284,7 +297,7 @@ add_action('wp_footer', function ($callback){
         LitJsSdk.litJsSdkLoadedInALIT();
 
         (async () => {
-            console.log("---Mounted---");
+            console.log("--- Mounted ---");
 
             // -- prepare dom
             const btnSubmit = document.getElementById("lit-submit");
@@ -294,7 +307,6 @@ add_action('wp_footer', function ($callback){
             const conditionObject = '.$access_controls.';
             const resourceId = '.$resource_id.';
             const accessControlConditions = conditionObject.accessControlConditions ?? conditionObject;
-            console.log(resourceId);
             console.log("________");
             console.log("conditionObject:", conditionObject);
             console.log("accessControlConditions:", accessControlConditions);

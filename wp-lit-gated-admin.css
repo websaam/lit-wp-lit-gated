@@ -91,6 +91,7 @@
 .lit-table-col__path .lit-btn-select-link {
   margin: auto;
   text-align: left;
+  width: 100%;
 }
 .lit-table-header .lit-table-col {
   margin-top: 2px;
@@ -98,6 +99,7 @@
 table > tbody {
   display: none;
 }
+
 
 /** ----- Panel ----- */
 .lit-table-row__panel {
@@ -272,6 +274,14 @@ section.lit-btn-sign .lit-btn-sign__text {
 .hide {
   display: none;
 }
+.lit-progress-bar {
+  position: absolute;
+  width: 0%;
+  height: 8px;
+  background: rgb(215,59,55);
+  background: linear-gradient(90deg, rgba(255,210,37,1) 0%, rgba(249,129,40,1) 30%,  rgba(215,59,55,1) 50%);
+  transition: .3s all ease-in;
+}
 /** ----- Fields ----- */
 textarea {
   background: #050b2c;
@@ -280,13 +290,65 @@ textarea {
   color: white;
   font-family: "Courier New", monospace;
 }
+.lit-select-links-container{
+  display: grid;
+  margin: auto;
+  gap: 12px;
+}
 .lit-selected-link {
   display: none;
 }
 .input-accs {
   transition: 0.3s ease;
 }
-
+.js-select-link {
+  text-align: center !important;
+  width: 74px !important;
+  float: right;
+  background: #2c1272;
+  color: white;
+  border: none;
+}
+.js-select-link:hover {
+  background: #050b2c;
+}
+.lit-btn-select-link-row{
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+.js-select-link__delete {
+  margin: auto;
+  padding-left: 12px;
+  display: flex;
+  cursor: pointer;
+}
+.js-select-link__delete svg{
+  pointer-events: none;
+}
+.js-select-link__delete:hover svg {
+  fill: red;
+}
+.lit-btn-select-link{
+  transition: 0.3s all ease-in;
+  width: 0;
+}
+.signed .lit-btn-select-link::after,
+.locked .lit-btn-select-link::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  text-align: center;
+  background: #2c1272;
+  width: 6px;
+  height: 100%;
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+}
+.signed .lit-btn-select-link-row:last-child .lit-btn-select-link::after {
+  background: unset;
+}
 /** ----- Controls ----- */
 .lit-menu-controls {
   clear: both;
