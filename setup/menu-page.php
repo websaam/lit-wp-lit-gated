@@ -150,7 +150,8 @@ function get_snippet($created_at, $accs = '', $paths = '', $signed = false, $wit
 
                     <!-- ===== PHP FOR LOOP CONTENT BEGINS ===== -->
                     <?php
-                    if(count($settings) > 0){
+                    // added (array) to cast $settings as an array for null assertion error in PHP8 and Wordpress 5.9+                     
+                    if(count((array)$settings) > 0) {
 
                         echo '<div class="lit-debug">';
 
