@@ -4,7 +4,7 @@
  * Plugin Name: Token / NFT / Blockchain Page Gating
  * Plugin URI: https://litprotocol.com
  * Description: Token-gate your post/page using <a href="https://litprotocol.com">Lit-Protocol</a>
- * Version: 0.0.2
+ * Version: 0.0.3
  * Author: LitProtocol.com
  * Author URI:  https://litprotocol.com
  * License: GPLv3
@@ -311,8 +311,19 @@ add_action('wp_footer', function ($callback){
             console.log("conditionObject:", conditionObject);
             console.log("accessControlConditions:", accessControlConditions);
             console.log("RESOURCE_ID:", resourceId);
-            const readable = await LitJsSdk.humanizeAccessControlConditions({accessControlConditions});
+
+            let readable;
             
+            try{
+                readable = await LitJsSdk.humanizeAccessControlConditions({accessControlConditions});
+            }catch(e){
+                console.warn(e);
+            }
+
+            if(readable === undefined || readable === ""){
+                readable = await LitJsSdk.humanizeAccessControlConditions({ solRpcConditions: accessControlConditions });
+            }
+
             // -- set display
             document.getElementById("lit-msg").innerHTML = readable;
             btnSubmit.classList.add("lit-active");
@@ -326,10 +337,11 @@ add_action('wp_footer', function ($callback){
                 await litNodeClient.connect();
                 
                 // -- validate web3
-                const chain = "ethereum";
-                let authSig;
+                let ethAuthSig;
+                let solAuthSig;
+
                 try {
-                    authSig = await LitJsSdk.checkAndSignAuthMessage({chain: chain});
+                    ethAuthSig = await LitJsSdk.checkAndSignAuthMessage({chain: "ethereum"});
                 } catch (error) {
                     console.log("Error:", error);
                     if (error.errorCode === "no_wallet") {
@@ -340,8 +352,33 @@ add_action('wp_footer', function ($callback){
                     return;
                 }
 
+                try{
+                    solAuthSig = await LitJsSdk.checkAndSignAuthMessage({chain: "solana"});
+                }catch (error) {
+                    console.log("Error:", error);
+                    if (error.errorCode === "no_wallet") {
+                        alert("Please install an Solana wallet to use this feature.  You can do this by installing Phantom from https://phantom.app/download/");
+                    } else {
+                        alert("An unknown error occurred when trying to get a signature from your wallet.  You can find it in the console.  Please email support@litprotocol.com with a bug report");
+                    }
+                    return;
+                }
+
                 // -- request token
-                const jwt = await litNodeClient.getSignedToken({ accessControlConditions, chain, authSig, resourceId });
+                let jwt;
+                
+                try{
+                    jwt = await litNodeClient.getSignedToken({ 
+                        unifiedAccessControlConditions: accessControlConditions,
+                        authSig: {
+                            solana: solAuthSig,
+                            ethereum: ethAuthSig,
+                        },
+                        resourceId 
+                    });
+                }catch(e){
+                    console.error("Failed to get JWT!");
+                }
                 
                 console.log("🤌 JWT:", jwt);                
                 document.getElementById("jwt").setAttribute("value", jwt);

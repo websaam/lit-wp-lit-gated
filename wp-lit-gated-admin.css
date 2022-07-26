@@ -33,6 +33,7 @@
 /** ===== Menu Page ===== */
 .wrap {
   font-family: "Space Grotesk", sans-serif;
+  position: relative;
 }
 .lit-logo {
   margin-top: 32px;

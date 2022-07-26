@@ -233,7 +233,11 @@ const getTimestamp = () => new Date().getTime();
 // Unmount the modal from the page
 // @return { void }
 //
-const closeModal = () => ACCM.ReactContentRenderer.unmount(document.getElementById("shareModal"));
+const closeModal = () => {
+    var div = document.getElementById("shareModal");
+    div.style.zIndex = 0;
+    ACCM.ReactContentRenderer.unmount(div)
+};
 
 // 
 // Mount the modal on the page
@@ -241,11 +245,15 @@ const closeModal = () => ACCM.ReactContentRenderer.unmount(document.getElementBy
 // @return { void }
 //
 const openShareModal = (callback) => {
+
+    var div = document.getElementById("shareModal");
+    div.style.zIndex = 2;
+
     ACCM.ReactContentRenderer.render(
         ACCM.ShareModal,
         {
             sharingItems: [],
-            onAccessControlConditionsSelected: callback,
+            onUnifiedAccessControlConditionsSelected: callback,
             onClose: closeModal,
             getSharingLink: (sharingItem) => {
                 console.log("getSharingLink", sharingItem);
@@ -441,8 +449,12 @@ const handleBtnsCreateRequirements = () => {
         const textArea = e.target.previousElementSibling;
         
         openShareModal((accessControlConditions) => {
+
+            const accs = accessControlConditions.unifiedAccessControlConditions;
+            console.warn("accessControlConditions:", accs);
+
             closeModal();
-            textArea.value = JSON.stringify(accessControlConditions);
+            textArea.value = JSON.stringify(accs);
             handleHumanised();
         });
     }
@@ -460,25 +472,14 @@ const handleHumanised = () => {
     const fields = document.getElementsByClassName('lit-humanised');
 
     asyncForEach([...fields], async (field) => {
-        console.log(field.nextElementSibling);
-        const conditionObject = JSON.parse(field.nextElementSibling.value);
+        console.log("field.nextElementSibling:", field.nextElementSibling);
 
-        console.log("conditionObject.accessControlConditions:", conditionObject.accessControlConditions);
+        const conditionObject = JSON.parse(field.nextElementSibling.value) ?? JSON.parse(field.nextElementSibling.accessControlConditions).accessControlConditions;
 
-        let readable;
+        console.log("conditionObject:", conditionObject);
 
-        try{
-            readable = await LitJsSdk.humanizeAccessControlConditions({ accessControlConditions: conditionObject});
-        }catch(e) {
-            console.warn("Humanised: V1 method failed. Try V2 method");
-        }
-
-        try{
-            readable = await LitJsSdk.humanizeAccessControlConditions({ accessControlConditions: conditionObject.accessControlConditions});
-        }catch(e) {
-            console.warn("Humanised: V2 method failed.");
-        }
-
+        const readable = await LitJsSdk.humanizeAccessControlConditions({ unifiedAccessControlConditions: conditionObject});
+        
         console.log("readable:", readable)
         field.innerText = readable;
     });
@@ -685,10 +686,11 @@ const handleBtnsSign = () => {
             // if(! confirmed ) return;
             
             // -- prepare resource id
-            const chain = "ethereum";
-            let authSig;
+            let ethAuthSig;
+            let solAuthSig;
+            
             try {
-                authSig = await LitJsSdk.checkAndSignAuthMessage({chain: chain});
+                ethAuthSig = await LitJsSdk.checkAndSignAuthMessage({chain: 'ethereum'});
             } catch (error) {
                 console.log("Error:", error);
                 if (error.errorCode === "no_wallet") {
@@ -698,6 +700,21 @@ const handleBtnsSign = () => {
                 }
                 return;
             }
+
+            try{
+                solAuthSig = await LitJsSdk.checkAndSignAuthMessage({chain: 'solana'});
+            }catch (error) {
+                console.log("Error:", error);
+                if (error.errorCode === "no_wallet") {
+                    alert("Please install an Solana wallet to use this feature.  You can do this by installing Phantom from https://phantom.app/download/");
+                } else {
+                    alert("An unknown error occurred when trying to get a signature from your wallet.  You can find it in the console.  Please email support@litprotocol.com with a bug report");
+                }
+                return;
+            }
+
+            console.log("ethAuthSig:", ethAuthSig);
+            console.log("solAuthSig:", solAuthSig);
     
             const conditionsObject = JSON.parse(accs_textarea.value);
     
@@ -724,18 +741,23 @@ const handleBtnsSign = () => {
             console.log("Signing...");
             const litNodeClient = new LitJsSdk.LitNodeClient();
             await litNodeClient.connect();
-            const sign = await litNodeClient.saveSigningCondition({ 
-                accessControlConditions, 
-                resourceId,
-                chain, 
-                authSig,
-                permanent: conditionsObject.permanent,
-            });
-    
-            if(! sign ){
-                alert("Something went wrong when signing this resource.");
-                return;
+
+            let sign;
+
+            try{
+                sign = await litNodeClient.saveSigningCondition({ 
+                    unifiedAccessControlConditions: accessControlConditions, 
+                    resourceId,
+                    authSig: {
+                        solana: solAuthSig,
+                        ethereum: ethAuthSig,
+                    },
+                    permanent: conditionsObject.permanent,
+                });
+            }catch(e){
+                console.error("Something went wrong when signing this resource.", e);
             }
+    
             row.classList.add('locked');
             progress_bar.style.width = ((i+1) / rows.length) * 100 + '%';    
         });
