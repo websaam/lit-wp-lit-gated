@@ -1,0 +1,13 @@
+#shareModal {
+    width: 500px;
+    height: 700px;
+    position: absolute;
+    left: 50%;
+    top: 60%;
+    transform: translate(-50%, -50%);
+    /* z-index: 2; */
+  }
+  
+.lsm-share-modal-container {
+border: 1px solid #333 !important;
+}

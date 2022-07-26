@@ -1,0 +1,32 @@
+.lit-debug {
+    font-size: 12px;
+    padding: 0 12px;
+    box-sizing: border-box;
+    border: 1px solid grey;
+    margin: 12px;
+}
+.lit-gated{
+    display: flex;
+    justify-content: center;
+    height: 100vh;
+    text-align: center;
+}
+.lit-gated img{
+    margin-bottom: 12px;
+    width: 128px;
+}
+.lit-gated > section{
+    margin: auto;
+}
+#lit-msg{
+    margin: 12px 0px;
+}
+#lit-submit{
+    transition: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    visibility: hidden;
+    opacity: 0;
+}
+.lit-active{
+    visibility: visible !important;
+    opacity: 1 !important;
+}

@@ -3,7 +3,7 @@
 /**
  * Class for registering a new menu page
  */
-class SetupMenu{
+class lwlgf_SetupMenu{
 
     /**
      * Properties
@@ -94,11 +94,11 @@ class SetupMenu{
      */
     function field_html(){
         $text = get_option( $this->option_name );
-        echo '<input type="text" id="'.$this->option_name.'" name="'.$this->option_name.'" value="'.esc_attr( $text ).'" />';
+        echo '<input type="text" id="'.esc_attr($this->option_name).'" name="'.esc_attr($this->option_name).'" value="'.esc_attr( $text ).'" />';
     }
 }
 
-new SetupMenu([
+new lwlgf_SetupMenu([
     "menu_name" => LIT_MENU_NAME,
     "menu_slug" => LIT_MENU_SLUG,
     "menu_icon" => LIT_ICON,
