@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
 define('LIT_ADMIN_HOOK', 'toplevel_page_lit-gated');
 define('LIT_ACC_MODAL_CSS', plugin_dir_url(__FILE__) . 'resources/lit-access-control-conditions-modal-vanilla-js.css');
 define('LIT_ACC_MODAL_JS', plugin_dir_url(__FILE__) . 'resources/lit-access-control-conditions-modal-vanilla-js.js');
-define('LIT_VERIFY_JS', plugin_dir_url(__FILE__) . 'resources/litjssdk.js');
+define('LIT_VERIFY_JS', plugin_dir_url(__FILE__) . 'resources/lit-js-sdk-serrano.js');
 define('LIT_ADMIN_CSS', plugin_dir_url(__FILE__) . 'wp-lit-gated-admin.css');
 define('LIT_APP_CSS', plugin_dir_url(__FILE__) . 'wp-lit-gated-app.css');
 define('LIT_JWT_API', 'https://jwt-verification-service.lit-protocol.workers.dev');
@@ -87,6 +87,7 @@ function lwlgf_request_headers(){
     $obj = new stdClass();
     $obj->protocol = isset($_SERVER["HTTPS"]) ? 'https://' : 'http://';
     $obj->url = get_permalink();
+    $obj->query = $_SERVER['QUERY_STRING'];
     $obj->base_url = "$_SERVER[HTTP_HOST]";
 
     // remove http:// or https:// in the url
@@ -202,30 +203,45 @@ add_action('wp_footer', function ($callback){
     lwlgf_console("List", $locked_list);
 
     $page_url = strtok(lwlgf_request_headers()->url, '?'); // this strips out any URL vars
-    // lwlgf_console("Path URL", $page_url);
 
     // -- Find that particular Lit-Gated entry for this page
     $found_entry = null;
+    $is_wild_card = false;
+
     for($i = 0; $i < count($settings); $i++){
         
         $data = $settings[$i];
 
-        // lwlgf_console("Number: $i", $data);
-
+        lwlgf_console("Number: $i", $data);
+        
         foreach($data->paths as $path){
+
+            // if the stored path is == current page url
             if($path->anchor == $page_url){
                 $found_entry = $data;
+            }
+
+            // if the stored path has wildcard ***
+            if(strpos($path->anchor, "***") !== false){
+
+                $query_name = explode("=", explode('?', $path->path)[1])[0];
+                $current_page_query_name = explode("=", lwlgf_request_headers()->query)[0];
+
+                if( $query_name == $current_page_query_name){
+                    echo "Search query: " . $query_name . " current: " . $current_page_query_name;
+                    $found_entry = $data;
+                    $is_wild_card = true;
+                }
             }
         }
     }
 
     lwlgf_console("Found Match", $found_entry);
 
-
     // ==================================================================================
     // +                             Non-Lit-Gated Page                             +
     // ==================================================================================
-    if( ! in_array($page_url, $locked_list)){
+    if( ! in_array($page_url, $locked_list) && $is_wild_card == false){
         lwlgf_console('***** Non-Lit-Gated Page *****', $page_url);
         echo html_entity_decode($content);
         // exit();
@@ -235,12 +251,17 @@ add_action('wp_footer', function ($callback){
     // ==================================================================================
     // +                               Lit-Gated Page                               +
     // ==================================================================================
- 
+    
     // -- get data from database
     $access_controls = $found_entry->accs;
     $created_at = $found_entry->created_at;
+    $path = lwlgf_request_headers()->path;
+    
+    if(strlen($path) <= 0){
+        $path = lwlgf_request_headers()->query;
+    }
 
-    $resource_id = '{"baseUrl":"'.lwlgf_request_headers()->base_url.'","path":"'.lwlgf_request_headers()->path.'","orgId":"","role":"","extraData":"'.$created_at.'"}';
+    $resource_id = '{"baseUrl":"'.lwlgf_request_headers()->base_url.'","path":"'.$path.'","orgId":"","role":"","extraData":"'.$created_at.'"}';
     
     // ==================================================================================
     // +                              BEFORE POST REQUEST                               +
@@ -315,14 +336,14 @@ add_action('wp_footer', function ($callback){
             let readable;
             
             try{
-                readable = await LitJsSdk.humanizeAccessControlConditions({accessControlConditions});
+                readable = await LitJsSdk.humanizeAccessControlConditions({unifiedAccessControlConditions: accessControlConditions});
             }catch(e){
                 console.warn(e);
             }
 
-            if(readable === undefined || readable === ""){
-                readable = await LitJsSdk.humanizeAccessControlConditions({ solRpcConditions: accessControlConditions });
-            }
+            // if(readable === undefined || readable === ""){
+            //     readable = await LitJsSdk.humanizeAccessControlConditions({ solRpcConditions: accessControlConditions });
+            // }
 
             // -- set display
             document.getElementById("lit-msg").innerHTML = readable;
@@ -332,56 +353,120 @@ add_action('wp_footer', function ($callback){
             btnSubmit.addEventListener("click", async (e) => {
                 e.preventDefault();
 
+                console.log("[btnSubmit] accessControlConditions:", accessControlConditions);
+                const chainsToBeSigned = accessControlConditions.map(chain => chain.chain).filter(chain => !!chain);
+                console.log("[btnSubmit]: chainsToBeSigned:", chainsToBeSigned);
+                
                 // -- prepare lit network
                 const litNodeClient = new LitJsSdk.LitNodeClient();
                 await litNodeClient.connect();
+
+                const LIT_EVM_CHAINS = ["ethereum","polygon","fantom","xdai","bsc","arbitrum","avalanche","fuji","harmony","kovan","mumbai","goerli","ropsten","rinkeby","cronos","optimism","celo","aurora","eluvio","alfajores","xdc","evmos","evmosTestnet"];
+                const LIT_SVM_CHAINS = ["solana","solanaDevnet","solanaTestnet"];
+                const LIT_COSMOS_CHAINS = ["cosmos","kyve","evmosCosmos","evmosCosmosTestnet"];
                 
                 // -- validate web3
                 let ethAuthSig;
                 let solAuthSig;
 
-                try {
-                    ethAuthSig = await LitJsSdk.checkAndSignAuthMessage({chain: "ethereum"});
-                } catch (error) {
-                    console.log("Error:", error);
-                    if (error.errorCode === "no_wallet") {
-                        alert("Please install an Ethereum wallet to use this feature.  You can do this by installing MetaMask from https://metamask.io/");
-                    } else {
-                        alert("An unknown error occurred when trying to get a signature from your wallet.  You can find it in the console.  Please email support@litprotocol.com with a bug report");
+                const evmChains = chainsToBeSigned.filter(chain => LIT_EVM_CHAINS.includes(chain));
+                const isEVM = evmChains.length > 0;
+    
+                const svmChains = chainsToBeSigned.filter(chain => LIT_SVM_CHAINS.includes(chain));
+                const isSVM = svmChains.length > 0;
+
+                console.log("[btnSubmit] evmChains:", evmChains);
+                console.log("[btnSubmit] svmChains:", svmChains);
+                console.log("[btnSubmit] isEVM:", isEVM);
+                console.log("[btnSubmit] isSVM:", isSVM);
+
+                if( isEVM ){
+                    try {
+                        ethAuthSig = await LitJsSdk.checkAndSignAuthMessage({chain: evmChains[0]});
+                        console.log("[btnSubmit] ethAuthSig:", ethAuthSig);
+                    } catch (error) {
+                        console.log("Error:", error);
+                        if (error.errorCode === "no_wallet") {
+                            alert("Please install an Ethereum wallet to use this feature.  You can do this by installing MetaMask from https://metamask.io/");
+                        } else {
+                            alert("An unknown error occurred when trying to get a signature from your wallet.  You can find it in the console.  Please email support@litprotocol.com with a bug report");
+                        }
+                        return;
                     }
-                    return;
                 }
 
-                try{
-                    solAuthSig = await LitJsSdk.checkAndSignAuthMessage({chain: "solana"});
-                }catch (error) {
-                    console.log("Error:", error);
-                    if (error.errorCode === "no_wallet") {
-                        alert("Please install an Solana wallet to use this feature.  You can do this by installing Phantom from https://phantom.app/download/");
-                    } else {
-                        alert("An unknown error occurred when trying to get a signature from your wallet.  You can find it in the console.  Please email support@litprotocol.com with a bug report");
+                if( isSVM ){
+                    try{
+                        solAuthSig = await LitJsSdk.checkAndSignAuthMessage({chain: svmChains[0]});
+                        console.log("[btnSubmit] solAuthSig:", solAuthSig);
+                    }catch (error) {
+                        console.log("Error:", error);
+                        if (error.errorCode === "no_wallet") {
+                            alert("Please install an Solana wallet to use this feature.  You can do this by installing Phantom from https://phantom.app/download/");
+                        } else {
+                            alert("An unknown error occurred when trying to get a signature from your wallet.  You can find it in the console.  Please email support@litprotocol.com with a bug report");
+                        }
+                        return;
                     }
-                    return;
                 }
 
                 // -- request token
                 let jwt;
                 
                 try{
-                    jwt = await litNodeClient.getSignedToken({ 
-                        unifiedAccessControlConditions: accessControlConditions,
-                        authSig: {
-                            solana: solAuthSig,
-                            ethereum: ethAuthSig,
-                        },
-                        resourceId 
-                    });
+
+                    let args;
+
+                    if( isEVM && !isSVM ){
+                        console.log("[btnSubmit] Only Ethereum Chain");
+                        args = { 
+                            accessControlConditions: accessControlConditions,
+                            chain: evmChains[0],
+                            authSig: ethAuthSig,
+                            resourceId,
+                        };
+                    }
+                    
+                    if( isSVM && !isEVM ){
+                        console.log("[btnSubmit] Only Solana Chain");
+                        args = { 
+                            solRpcConditions: accessControlConditions,
+                            chain: svmChains[0],
+                            authSig: solAuthSig,
+                            resourceId,
+                        };
+                    }
+
+
+                    if( isSVM && isEVM ){
+                        console.log("[btnSubmit] Both EVM & SVM Chains");
+                        args = { 
+                            unifiedAccessControlConditions: accessControlConditions,
+                            authSig: {
+                                solana: solAuthSig,
+                                ethereum: ethAuthSig,
+                            },
+                            resourceId,
+                        };
+                    }
+
+                    console.log("[btnSubmit] args:", args);
+                    
+                    jwt = await litNodeClient.getSignedToken(args);
+                    
                 }catch(e){
                     console.error("Failed to get JWT!");
                 }
                 
-                console.log("🤌 JWT:", jwt);                
+                console.log("[btnSubmit] JWT:", jwt);                
                 document.getElementById("jwt").setAttribute("value", jwt);
+
+                // return;
+
+                if ( ! jwt ) {
+                    alert("You\'re not authorized!");
+                    return;
+                }
 
                 // -- submit form to verify token
                 form.submit();

@@ -641,7 +641,7 @@ const handleBtnsSign = () => {
 
     const handleClick = async (e) => {
 
-        console.warn("handleBtnsSign");
+        console.warn("[handleBtnsSign]");
 
         const target_row = e.target.parentElement.parentElement;
         const progress_bar = target_row.querySelector('.lit-progress-bar');
@@ -652,29 +652,37 @@ const handleBtnsSign = () => {
         let rows = target_row.querySelectorAll('.lit-btn-select-link-row');
         rows = [...rows].filter((row) => row.innerText != 'Select Link');
 
-        console.log("target_row:", target_row);
-        console.log("accs_textarea:", accs_textarea);
-        console.log("link_textarea:", link_textarea);
-        console.log("accs:", accs);
+        console.log("[handleBtnsSign] target_row:", target_row);
+        console.log("[handleBtnsSign] accs_textarea:", accs_textarea);
+        console.log("[handleBtnsSign] link_textarea:", link_textarea);
+        console.log("[handleBtnsSign] accs:", accs);
         // console.log("url:", url);
 
-        console.log("rows:", rows);
-        
+        console.log("[handleBtnsSign] rows:", rows);
+
+        const LIT_EVM_CHAINS = ["ethereum","polygon","fantom","xdai","bsc","arbitrum","avalanche","fuji","harmony","kovan","mumbai","goerli","ropsten","rinkeby","cronos","optimism","celo","aurora","eluvio","alfajores","xdc","evmos","evmosTestnet"];
+        const LIT_SVM_CHAINS = ["solana","solanaDevnet","solanaTestnet"];
+        const LIT_COSMOS_CHAINS = ["cosmos","kyve","evmosCosmos","evmosCosmosTestnet"];
+
+        let sign;
+        let jwt;
+        let args;
+
         await asyncForEach(rows, async (row, i) => {
             const url = row.querySelector('.lit-btn-secondary').innerText;
 
-            console.warn(`====== SIGNING: ${i}: url:`, url, " ======");
+            console.warn(`[handleBtnsSign] ====== SIGNING: ${i}: url:`, url, " ======");
     
             // -- validate
             if(accs_textarea.value == null || accs_textarea.value == '' || accs_textarea.value == undefined || accs_textarea.value.length < 5){
-                console.log("Error");
+                console.log("[handleBtnsSign] Error");
                 accs_textarea.classList.add('error');
                 setTimeout(() => accs_textarea.classList.remove('error'), 2000);
                 return;
             }
     
             if(link_textarea.value == null || link_textarea.value == '' || link_textarea.value == undefined || link_textarea.value.length < 5){
-                console.log("Error");
+                console.log("[handleBtnsSign] Error");
                 link_textarea.previousElementSibling.classList.add('error');
                 setTimeout(() => link_textarea.previousElementSibling.classList.remove('error'), 2000);
                 return;
@@ -688,39 +696,60 @@ const handleBtnsSign = () => {
             // -- prepare resource id
             let ethAuthSig;
             let solAuthSig;
-            
-            try {
-                ethAuthSig = await LitJsSdk.checkAndSignAuthMessage({chain: 'ethereum'});
-            } catch (error) {
-                console.log("Error:", error);
-                if (error.errorCode === "no_wallet") {
-                    alert("Please install an Ethereum wallet to use this feature.  You can do this by installing MetaMask from https://metamask.io/");
-                } else {
-                    alert("An unknown error occurred when trying to get a signature from your wallet.  You can find it in the console.  Please email support@litprotocol.com with a bug report");
-                }
-                return;
-            }
 
-            try{
-                solAuthSig = await LitJsSdk.checkAndSignAuthMessage({chain: 'solana'});
-            }catch (error) {
-                console.log("Error:", error);
-                if (error.errorCode === "no_wallet") {
-                    alert("Please install an Solana wallet to use this feature.  You can do this by installing Phantom from https://phantom.app/download/");
-                } else {
-                    alert("An unknown error occurred when trying to get a signature from your wallet.  You can find it in the console.  Please email support@litprotocol.com with a bug report");
-                }
-                return;
-            }
-
-            console.log("ethAuthSig:", ethAuthSig);
-            console.log("solAuthSig:", solAuthSig);
-    
             const conditionsObject = JSON.parse(accs_textarea.value);
     
             const accessControlConditions = conditionsObject.accessControlConditions ?? conditionsObject;
+
             conditionsObject.permanent = false;
-    
+
+            const chainsToBeSigned = accessControlConditions.map(cond => cond.chain).filter(cond => !!cond);
+            console.log("[handleBtnsSign] chainsToBeSigned:", chainsToBeSigned);
+
+            const evmChains = chainsToBeSigned.filter(chain => LIT_EVM_CHAINS.includes(chain));
+            const isEVM = evmChains.length > 0;
+
+            const svmChains = chainsToBeSigned.filter(chain => LIT_SVM_CHAINS.includes(chain));
+            const isSVM = svmChains.length > 0;
+
+            console.log("[handleBtnsSign] evmChains:", evmChains);
+            console.log("[handleBtnsSign] svmChains:", svmChains);
+            console.log("[handleBtnsSign] isEVM:", isEVM);
+            console.log("[handleBtnsSign] isSVM:", isSVM);
+
+            if( isEVM ){
+                try {
+                    ethAuthSig = await LitJsSdk.checkAndSignAuthMessage({chain: evmChains[0]});
+                    console.log("[handleBtnsSign] ethAuthSig:", ethAuthSig);
+                } catch (error) {
+                    console.log("[handleBtnsSign] isEVM Error:", error);
+                    if (error.errorCode === "no_wallet") {
+                        alert("Please install an Ethereum wallet to use this feature.  You can do this by installing MetaMask from https://metamask.io/");
+                    } else {
+                        alert("An unknown error occurred when trying to get a signature from your wallet.  You can find it in the console.  Please email support@litprotocol.com with a bug report");
+                    }
+                    return;
+                }
+            }
+
+            if( isSVM ){
+                try{
+                    solAuthSig = await LitJsSdk.checkAndSignAuthMessage({chain: svmChains[0]});
+                    console.log("[handleBtnsSign] solAuthSig:", solAuthSig);
+                }catch (error) {
+                    console.log("[handleBtnsSign] isSVM Error:", error);
+                    if (error.errorCode === "no_wallet") {
+                        alert("Please install an Solana wallet to use this feature.  You can do this by installing Phantom from https://phantom.app/download/");
+                    } else {
+                        alert("An unknown error occurred when trying to get a signature from your wallet.  You can find it in the console.  Please email support@litprotocol.com with a bug report");
+                    }
+                    return;
+                }
+            }
+
+            console.log("[handleBtnsSign] ethAuthSig:", ethAuthSig);
+            console.log("[handleBtnsSign] solAuthSig:", solAuthSig);
+
             // const href = getHref(link_textarea.value);
             const { base_url, path } = getURLParts(url);
             
@@ -734,33 +763,82 @@ const handleBtnsSign = () => {
                 extraData: timestamp,
             };
     
-            console.log("RESOURCE_ID:", resourceId);
-            console.log("accessControlConditions:", accessControlConditions);
+            console.log("[handleBtnsSign] RESOURCE_ID:", resourceId);
+            console.log("[handleBtnsSign] accessControlConditions:", accessControlConditions);
     
             // -- start signing
-            console.log("Signing...");
+            console.log("[handleBtnsSign] Signing...");
+
             const litNodeClient = new LitJsSdk.LitNodeClient();
             await litNodeClient.connect();
 
-            let sign;
-
             try{
-                sign = await litNodeClient.saveSigningCondition({ 
-                    unifiedAccessControlConditions: accessControlConditions, 
-                    resourceId,
-                    authSig: {
-                        solana: solAuthSig,
-                        ethereum: ethAuthSig,
-                    },
-                    permanent: conditionsObject.permanent,
-                });
+
+                // -- EVM CHAIN ONLY
+                if( isEVM && !isSVM ){
+                    args = {
+                        accessControlConditions,
+                        chain: evmChains[0],
+                        authSig: ethAuthSig,
+                        resourceId,
+                        permanent: false,
+                    };
+                }
+
+                // -- SVM CHAIN ONLY
+                if( isSVM && !isEVM ){
+                    args = {
+                        solRpcConditions: accessControlConditions,
+                        chain: svmChains[0],
+                        authSig: solAuthSig,
+                        resourceId,
+                        permanent: false,
+                    };
+                }
+
+                // -- BOTH CHAINS
+                if( isSVM && isEVM ){
+                    console.log("[handleBtnsSign] Both EVM & SVM Chains");
+                    args = { 
+                        unifiedAccessControlConditions: accessControlConditions,
+                        authSig: {
+                            solana: solAuthSig,
+                            ethereum: ethAuthSig,
+                            // ...isSVM && {solana: solAuthSig},
+                            // ...isEVM && {ethereum: ethAuthSig},
+                        },
+                        resourceId,
+                        permanent: false,
+                    };
+                }
+
+                console.log("[handleBtnsSign] args:", args);
+
+                sign = await litNodeClient.saveSigningCondition(args);
+                
             }catch(e){
-                console.error("Something went wrong when signing this resource.", e);
+                console.error("[handleBtnsSign] Something went wrong when signing this resource.", e);
+                alert(`[${e.name}][${e.errorCode}] ${e.message}`);
+                return;
             }
-    
+
+            console.log("[handleBtnsSign] sign:", sign);
+            
+            // [Lit-JS-SDK] most common error: {"errorCode":"incorrect_access_control_conditions","message":"The access control conditions you passed in do not match the ones that were set by the condition creator for this resourceId."}
+            try{
+                jwt = await litNodeClient.getSignedToken(args);
+                console.log("[handleBtnsSign] jwt:", jwt);
+            }catch(e){
+                console.error("[handleBtnsSign] Unable to get JWT.", e);
+                alert(`[${e.name}][${e.errorCode}] ${e.message}`);
+                return;
+            }
+
             row.classList.add('locked');
             progress_bar.style.width = ((i+1) / rows.length) * 100 + '%';    
         });
+
+        if ( ! jwt || ! sign ) return;
 
         await new Promise(r => setTimeout(r, 1000));
 
