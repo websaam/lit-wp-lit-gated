@@ -698,18 +698,22 @@ const handleBtnsSign = () => {
             let ethAuthSig;
             let solAuthSig;
 
+            // -- object from text area
             const conditionsObject = JSON.parse(accs_textarea.value);
-    
+            
+            // -- backward compatiblity for old accs
             const accessControlConditions = conditionsObject.accessControlConditions ?? conditionsObject;
+            // conditionsObject.permanent = false;
 
-            conditionsObject.permanent = false;
-
+            // -- extract all chains' name from the accs
             const chainsToBeSigned = accessControlConditions.map(cond => cond.chain).filter(cond => !!cond);
             console.log("[handleBtnsSign] chainsToBeSigned:", chainsToBeSigned);
 
+            // -- array of EVM chains
             const evmChains = chainsToBeSigned.filter(chain => LIT_EVM_CHAINS.includes(chain));
             const isEVM = evmChains.length > 0;
 
+            // -- array of SVM chains
             const svmChains = chainsToBeSigned.filter(chain => LIT_SVM_CHAINS.includes(chain));
             const isSVM = svmChains.length > 0;
 
@@ -718,12 +722,19 @@ const handleBtnsSign = () => {
             console.log("[handleBtnsSign] isEVM:", isEVM);
             console.log("[handleBtnsSign] isSVM:", isSVM);
 
+            // -- (required) v2 sol condition
+            const requiredSolConditions = {
+                pdaParams: [],
+                pdaInterface: { offset: 0, fields: {} },
+                pdaKey: "",
+            };
+
             if( isEVM ){
                 try {
                     ethAuthSig = await LitJsSdk.checkAndSignAuthMessage({chain: evmChains[0]});
                     console.log("[handleBtnsSign] ethAuthSig:", ethAuthSig);
                 } catch (error) {
-                    console.log("[handleBtnsSign] isEVM Error:", error);
+                    console.error("[handleBtnsSign] isEVM Error:", error);
                     if (error.errorCode === "no_wallet") {
                         alert("Please install an Ethereum wallet to use this feature.  You can do this by installing MetaMask from https://metamask.io/");
                     } else {
@@ -738,7 +749,7 @@ const handleBtnsSign = () => {
                     solAuthSig = await LitJsSdk.checkAndSignAuthMessage({chain: svmChains[0]});
                     console.log("[handleBtnsSign] solAuthSig:", solAuthSig);
                 }catch (error) {
-                    console.log("[handleBtnsSign] isSVM Error:", error);
+                    console.error("[handleBtnsSign] isSVM Error:", error);
                     if (error.errorCode === "no_wallet") {
                         alert("Please install an Solana wallet to use this feature.  You can do this by installing Phantom from https://phantom.app/download/");
                     } else {
@@ -772,11 +783,13 @@ const handleBtnsSign = () => {
 
             const litNodeClient = new LitJsSdk.LitNodeClient();
             await litNodeClient.connect();
-
+            
             try{
 
                 // -- EVM CHAIN ONLY
                 if( isEVM && !isSVM ){
+                    console.log("[handleBtnsSign] EVM CHAIN ONLY");
+                    
                     args = {
                         accessControlConditions,
                         chain: evmChains[0],
@@ -785,11 +798,23 @@ const handleBtnsSign = () => {
                         permanent: false,
                     };
                 }
-
+                
                 // -- SVM CHAIN ONLY
                 if( isSVM && !isEVM ){
+                    console.log("[handleBtnsSign] SVM CHAIN ONLY");
+                    
+                    // -- updated and inject/hardcore the required v2 Solana params for access control conditions
+                    let newSolRpcConditions = accessControlConditions.map((cond) => {
+                        return {
+                            ...cond, 
+                            ...requiredSolConditions
+                        }
+                    });
+
+                    console.log("[handleBtnsSign] newSolRpcConditions:", newSolRpcConditions);
+
                     args = {
-                        solRpcConditions: accessControlConditions,
+                        solRpcConditions: newSolRpcConditions,
                         chain: svmChains[0],
                         authSig: solAuthSig,
                         resourceId,
@@ -800,13 +825,27 @@ const handleBtnsSign = () => {
                 // -- BOTH CHAINS
                 if( isSVM && isEVM ){
                     console.log("[handleBtnsSign] Both EVM & SVM Chains");
+
+                    // -- updated and inject/hardcore the required v2 Solana params for access control conditions
+                    let newSolRpcConditions = accessControlConditions.map((cond) => {
+
+                        if(LIT_SVM_CHAINS.includes(cond.chain)){
+                            return {
+                                ...cond, 
+                                ...requiredSolConditions
+                            };
+                        }
+                        return cond;
+                        
+                    });
+
+                    console.log("[handleBtnsSign] newSolRpcConditions:", newSolRpcConditions);
+                    
                     args = { 
-                        unifiedAccessControlConditions: accessControlConditions,
+                        unifiedAccessControlConditions: newSolRpcConditions,
                         authSig: {
                             solana: solAuthSig,
                             ethereum: ethAuthSig,
-                            // ...isSVM && {solana: solAuthSig},
-                            // ...isEVM && {ethereum: ethAuthSig},
                         },
                         resourceId,
                         permanent: false,

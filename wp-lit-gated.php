@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
 define('LIT_ADMIN_HOOK', 'toplevel_page_lit-gated');
 define('LIT_ACC_MODAL_CSS', plugin_dir_url(__FILE__) . 'resources/lit-access-control-conditions-modal-vanilla-js.css');
 define('LIT_ACC_MODAL_JS', plugin_dir_url(__FILE__) . 'resources/lit-access-control-conditions-modal-vanilla-js.js');
-define('LIT_VERIFY_JS', plugin_dir_url(__FILE__) . 'resources/lit-js-sdk-serrano.js');
+define('LIT_VERIFY_JS', plugin_dir_url(__FILE__) . 'resources/lit-js-sdk-jalapeno.js');
 define('LIT_ADMIN_CSS', plugin_dir_url(__FILE__) . 'wp-lit-gated-admin.css');
 define('LIT_APP_CSS', plugin_dir_url(__FILE__) . 'wp-lit-gated-app.css');
 define('LIT_JWT_API', 'https://jwt-verification-service.lit-protocol.workers.dev');
@@ -380,6 +380,13 @@ add_action('wp_footer', function ($callback){
                 console.log("[btnSubmit] isEVM:", isEVM);
                 console.log("[btnSubmit] isSVM:", isSVM);
 
+                // -- (required) v2 sol condition
+                const requiredSolConditions = {
+                    pdaParams: [],
+                    pdaInterface: { offset: 0, fields: {} },
+                    pdaKey: "",
+                };
+
                 if( isEVM ){
                     try {
                         ethAuthSig = await LitJsSdk.checkAndSignAuthMessage({chain: evmChains[0]});
@@ -429,19 +436,49 @@ add_action('wp_footer', function ($callback){
                     
                     if( isSVM && !isEVM ){
                         console.log("[btnSubmit] Only Solana Chain");
+
+                        // -- updated and inject/hardcore the required v2 Solana params for access control conditions
+                        let newSolRpcConditions = accessControlConditions.map((cond) => {
+                            return {
+                                ...cond, 
+                                ...requiredSolConditions
+                            }
+                        });
+    
+                        console.log("[btnSubmit] newSolRpcConditions:", newSolRpcConditions);
+
                         args = { 
-                            solRpcConditions: accessControlConditions,
+                            solRpcConditions: newSolRpcConditions,
                             chain: svmChains[0],
                             authSig: solAuthSig,
                             resourceId,
+                            pdaParams: [],
+                            pdaInterface: { offset: 0, fields: {} },
+                            pdaKey: "",
                         };
                     }
 
 
                     if( isSVM && isEVM ){
                         console.log("[btnSubmit] Both EVM & SVM Chains");
+
+                        // -- updated and inject/hardcore the required v2 Solana params for access control conditions
+                        let newSolRpcConditions = accessControlConditions.map((cond) => {
+    
+                            if(LIT_SVM_CHAINS.includes(cond.chain)){
+                                return {
+                                    ...cond, 
+                                    ...requiredSolConditions
+                                };
+                            }
+                            return cond;
+                            
+                        });
+    
+                        console.log("[handleBtnsSign] newSolRpcConditions:", newSolRpcConditions);
+
                         args = { 
-                            unifiedAccessControlConditions: accessControlConditions,
+                            unifiedAccessControlConditions: newSolRpcConditions,
                             authSig: {
                                 solana: solAuthSig,
                                 ethereum: ethAuthSig,
