@@ -4,7 +4,7 @@
  * Plugin Name: Token / NFT / Blockchain Page Gating
  * Plugin URI: https://litprotocol.com
  * Description: Token-gate your post/page using <a href="https://litprotocol.com">Lit-Protocol</a>
- * Version: 0.0.3
+ * Version: 0.0.4
  * Author: LitProtocol.com
  * Author URI:  https://litprotocol.com
  * License: GPLv3
@@ -437,7 +437,7 @@ add_action('wp_footer', function ($callback){
                     if( isSVM && !isEVM ){
                         console.log("[btnSubmit] Only Solana Chain");
 
-                        // -- updated and inject/hardcore the required v2 Solana params for access control conditions
+                        // -- updated and inject the required v2 Solana params for access control conditions
                         let newSolRpcConditions = accessControlConditions.map((cond) => {
                             return {
                                 ...cond, 
@@ -451,10 +451,7 @@ add_action('wp_footer', function ($callback){
                             solRpcConditions: newSolRpcConditions,
                             chain: svmChains[0],
                             authSig: solAuthSig,
-                            resourceId,
-                            pdaParams: [],
-                            pdaInterface: { offset: 0, fields: {} },
-                            pdaKey: "",
+                            resourceId
                         };
                     }
 
@@ -462,7 +459,7 @@ add_action('wp_footer', function ($callback){
                     if( isSVM && isEVM ){
                         console.log("[btnSubmit] Both EVM & SVM Chains");
 
-                        // -- updated and inject/hardcore the required v2 Solana params for access control conditions
+                        // -- updated and inject the required v2 Solana params for access control conditions
                         let newSolRpcConditions = accessControlConditions.map((cond) => {
     
                             if(LIT_SVM_CHAINS.includes(cond.chain)){

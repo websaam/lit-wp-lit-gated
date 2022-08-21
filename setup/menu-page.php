@@ -803,7 +803,7 @@ const handleBtnsSign = () => {
                 if( isSVM && !isEVM ){
                     console.log("[handleBtnsSign] SVM CHAIN ONLY");
                     
-                    // -- updated and inject/hardcore the required v2 Solana params for access control conditions
+                    // -- updated and inject the required v2 Solana params for access control conditions
                     let newSolRpcConditions = accessControlConditions.map((cond) => {
                         return {
                             ...cond, 
@@ -826,7 +826,7 @@ const handleBtnsSign = () => {
                 if( isSVM && isEVM ){
                     console.log("[handleBtnsSign] Both EVM & SVM Chains");
 
-                    // -- updated and inject/hardcore the required v2 Solana params for access control conditions
+                    // -- updated and inject the required v2 Solana params for access control conditions
                     let newSolRpcConditions = accessControlConditions.map((cond) => {
 
                         if(LIT_SVM_CHAINS.includes(cond.chain)){
