@@ -865,20 +865,21 @@ const handleBtnsSign = () => {
             console.log("[handleBtnsSign] sign:", sign);
             
             // [Lit-JS-SDK] most common error: {"errorCode":"incorrect_access_control_conditions","message":"The access control conditions you passed in do not match the ones that were set by the condition creator for this resourceId."}
-            try{
-                jwt = await litNodeClient.getSignedToken(args);
-                console.log("[handleBtnsSign] jwt:", jwt);
-            }catch(e){
-                console.error("[handleBtnsSign] Unable to get JWT.", e);
-                alert(`[${e.name}][${e.errorCode}] ${e.message}`);
-                return;
-            }
+            // try{
+            //     jwt = await litNodeClient.getSignedToken(args);
+            //     console.log("[handleBtnsSign] jwt:", jwt);
+            // }catch(e){
+            //     console.error("[handleBtnsSign] Unable to get JWT.", e);
+            //     alert(`[${e.name}][${e.errorCode}] ${e.message}`);
+            //     return;
+            // }
 
             row.classList.add('locked');
             progress_bar.style.width = ((i+1) / rows.length) * 100 + '%';    
         });
 
-        if ( ! jwt || ! sign ) return;
+        // if ( ! jwt || ! sign ) return;
+        if ( ! sign ) return;
 
         await new Promise(r => setTimeout(r, 1000));
 

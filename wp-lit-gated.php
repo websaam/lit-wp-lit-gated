@@ -4,7 +4,7 @@
  * Plugin Name: Token / NFT / Blockchain Page Gating
  * Plugin URI: https://litprotocol.com
  * Description: Token-gate your post/page using <a href="https://litprotocol.com">Lit-Protocol</a>
- * Version: 0.0.4
+ * Version: 0.0.5
  * Author: LitProtocol.com
  * Author URI:  https://litprotocol.com
  * License: GPLv3
